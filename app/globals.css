@@ -2,17 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url(https://use.typekit.net/egs2qnv.css);
+
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-start-rgb: 244, 245, 246;
+  --background-end-rgb: 244, 245, 246;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background-start-rgb: 37, 41, 45;
+    --background-end-rgb: 37, 41, 45;
+  }
+
+  input {
+    color: black;
+  }
+
+  text {
+    fill: white;
   }
 }
 
@@ -24,4 +34,9 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+}
+
+h1 {
+  font-size: 61px;
+  font-weight: 800;
 }
