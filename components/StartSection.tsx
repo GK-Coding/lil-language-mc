@@ -87,7 +87,7 @@ export default function StartSection() {
                     <div className={"text-[14px] md:text-[25px] font-bold tracking-wider flex flex-row items-center absolute left-[15px] top-[100px]"}><Image src="Hard.svg" height={18} width={30} alt={"Hard Icon"} className='pr-[10px]' /> Hard</div>
                 </button></div> }
             </div>
-            <div className="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center max-w-[1920px] px-[100px] mx-auto">
+            <div className="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center max-w-[1920px] md:px-[100px] mx-auto">
                 <div className="flex-col justify-center items-center gap-10 flex">
                     <div className="flex-col justify-center items-center flex">
                         <div className="text-center">
@@ -95,10 +95,10 @@ export default function StartSection() {
                             <span className="text-[22px] md:text-[61px] font-bold tracking-[-4px]">________<br /></span>
                             <span className="text-[22px] md:text-[61px] font-extrabold tracking-[3.05px]">Write 4 bars in 30 seconds</span>
                         </div>
-                        <div className="w-[842px] text-center text-2xl font-normal tracking-wide">Bonus: End with the Keyword</div>
+                        <div className="md:w-[842px] text-center text-[16px] md:text-[24px] font-normal tracking-wide">Bonus: End with the Keyword</div>
                     </div>
-                    <div className="text-[18px] md:text-[30px] px-[66px] pb-[15px] pt-[20px] bg-gradient-to-r from-teal-300 to-teal-300 rounded-[12px] md:rounded-[25px] flex-col justify-center items-center gap-2.5 flex">
-                        <button className="text-zinc-900 text-3xl font-bold tracking-wider" onClick={() => setCountdownActive(true)}>Reveal Word</button>
+                    <div className="text-[18px] md:text-[30px] px-[66px] pb-[13px] pt-[17px] bg-gradient-to-r from-teal-300 to-teal-300 rounded-[12px] md:rounded-[25px] flex-col justify-center items-center gap-2.5 flex">
+                        <button className="text-zinc-900 font-bold tracking-wider" onClick={() => setCountdownActive(true)}>Reveal Word</button>
                     </div>
                 </div>
             </div>
