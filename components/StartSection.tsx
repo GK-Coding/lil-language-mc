@@ -21,15 +21,15 @@ export default function StartSection() {
 
     if (countdownActive) {
         return <>
-            <div className="absolute top-[25px] left-0 right-0 w-[697px] flex justify-center mx-auto z-10">
-                <div className={(difficulty === "easy" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Easy.svg" height={28.01} width={32.43} alt={"Easy Icon"} className='pr-[10px]' /> Easy</div>
+            <div className="absolute top-[25px] left-0 right-0 w-full md:w-[697px] flex justify-center mx-auto z-10">
+                <div className={(difficulty === "easy" ? "bg-[#FFF] dark:bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] mx-[9px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[14px] md:text-[25px] font-bold tracking-wider flex flex-row items-center"}><Image src="Easy.svg" height={28.01} width={32.43} alt={"Easy Icon"} className='pr-[10px]' /> Easy</div>
                 </div>
-                <div className={(difficulty === "medium" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Medium.svg" height={28.01} width={32.43} alt={"Medium Icon"} className='pr-[10px]' /> Medium</div>
+                <div className={(difficulty === "medium" ? "bg-[#FFF] dark:bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] mx-[9px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[14px] md:text-[25px] font-bold tracking-wider flex flex-row items-center"}><Image src="Medium.svg" height={28.01} width={32.43} alt={"Medium Icon"} className='pr-[10px]' /> Medium</div>
                 </div>
-                <div className={(difficulty === "hard" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Hard.svg" height={33.84} width={45.63} alt={"Hard Icon"} className='pr-[10px]' /> Hard</div>
+                <div className={(difficulty === "hard" ? "bg-[#FFF] dark:bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] mx-[9px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[14px] md:text-[25px] font-bold tracking-wider flex flex-row items-center"}><Image src="Hard.svg" height={33.84} width={45.63} alt={"Hard Icon"} className='pr-[10px]' /> Hard</div>
                 </div>
             </div>
             <div className="absolute top-[90px] left-0 right-0 flex justify-center items-center max-w-[1920px] px-[100px] mx-auto">
@@ -44,24 +44,24 @@ export default function StartSection() {
         </>
     } else {
         return <>
-            <div className="absolute top-[25px] left-0 right-0 w-[697px] flex justify-center mx-auto z-10">
-                <button type="button" onClick={() => setDifficulty("easy")} className={(difficulty === "easy" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Easy.svg" height={28.01} width={32.43} alt={"Easy Icon"} className='pr-[10px]' /> Easy</div>
+            <div className="absolute top-[25px] left-0 right-0 w-full md:w-[697px] flex justify-center mx-auto z-10">
+                <button type="button" onClick={() => setDifficulty("easy")} className={(difficulty === "easy" ? "bg-[#FFF] dark:bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] mx-[9px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[14px] md:text-[25px] font-bold tracking-wider flex flex-row items-center"}><Image src="Easy.svg" height={28.01} width={32.43} alt={"Easy Icon"} className='pr-[10px]' /> Easy</div>
                 </button>
-                <button type="button" onClick={() => setDifficulty("medium")} className={(difficulty === "medium" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Medium.svg" height={28.01} width={32.43} alt={"Medium Icon"} className='pr-[10px]' /> Medium</div>
+                <button type="button" onClick={() => setDifficulty("medium")} className={(difficulty === "medium" ? "bg-[#FFF] dark:bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] mx-[9px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[14px] md:text-[25px] font-bold tracking-wider flex flex-row items-center"}><Image src="Medium.svg" height={28.01} width={32.43} alt={"Medium Icon"} className='pr-[10px]' /> Medium</div>
                 </button>
-                <button type="button" onClick={() => setDifficulty("hard")} className={(difficulty === "hard" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Hard.svg" height={33.84} width={45.63} alt={"Hard Icon"} className='pr-[10px]' /> Hard</div>
+                <button type="button" onClick={() => setDifficulty("hard")} className={(difficulty === "hard" ? "bg-[#FFF] dark:bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] mx-[9px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[14px] md:text-[25px] font-bold tracking-wider flex flex-row items-center"}><Image src="Hard.svg" height={33.84} width={45.63} alt={"Hard Icon"} className='pr-[10px]' /> Hard</div>
                 </button>
             </div>
             <div className="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center max-w-[1920px] px-[100px] mx-auto">
                 <div className="flex-col justify-center items-center gap-10 flex">
                     <div className="flex-col justify-center items-center flex">
                         <div className="text-center">
-                            <span className="text-[61px] font-bold tracking-[3.05px]">Your word is </span>
-                            <span className="text-[61px] font-bold tracking-[-4px]">________<br /></span>
-                            <span className="text-[61px] font-extrabold tracking-[3.05px]">Write 4 bars in 30 seconds</span>
+                            <span className="text-[22px] md:text-[61px] font-extrabold tracking-[3.05px]">Your word is </span>
+                            <span className="text-[22px] md:text-[61px] font-bold tracking-[-4px]">________<br /></span>
+                            <span className="text-[22px] md:text-[61px] font-extrabold tracking-[3.05px]">Write 4 bars in 30 seconds</span>
                         </div>
                         <div className="w-[842px] text-center text-2xl font-normal tracking-wide">Bonus: End with the Keyword</div>
                     </div>

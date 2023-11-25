@@ -68,10 +68,10 @@ export default function FreestyleForm({word}: {word: string}) {
 
     if (pageState === "rapping") {
         return (
-            <div className="max-w-[1920px] w-full px-[100px] pb-[100px] pt-[25px] mx-auto">
+            <div className="max-w-[1920px] w-full px-[30px] md:px-[100px] pb-[100px] pt-[25px] mx-auto">
                 <Word word={word} linesComplete={lines.length - 1} submit={submit} />
                 
-                <div className='absolute bottom-[100px] px-[0px] h-[394px] w-full max-w-[1720px]'>
+                <div className='absolute top-[140px] md:top-[auto] md:bottom-[100px] md:px-0 h-[394px] left-[30px] right-[30px] md:left-auto md:right-auto md:w-full max-w-[1720px]'>
                     {lines.map((line, index) => (
                         <input 
                             key={index} 
@@ -82,7 +82,7 @@ export default function FreestyleForm({word}: {word: string}) {
                             onChange={(e) => updateLines(index, e.target.value)} 
                             onKeyPress={(e) => handleKeyPress(e, index)} 
                             value={line} 
-                            className="w-full text-2xl py-[20px] mb-[25px] px-[40px] dark:text-[#E1E3E3] rounded-[25px] bg-transparent border-solid border border-[#1C1E1E]/50 dark:border-[#E1E3E3]/50"
+                            className="w-full text-[14px] md:text-2xl py-[10px] md:py-[20px] mb-[25px] px-[15px] md:px-[40px] dark:text-[#E1E3E3] rounded-[12px] md:rounded-[25px] bg-transparent border-solid border border-[#1C1E1E]/50 dark:border-[#E1E3E3]/50"
                         />
                     ))}
                 </div>
@@ -91,12 +91,12 @@ export default function FreestyleForm({word}: {word: string}) {
     } else if (pageState === "score") {
         return (
             <div className="max-w-[1920px] w-full px-[100px] pb-[100px] pt-[25px] mx-auto text-center">
-                <h1>Your Total Score For &quot;{word}&quot; Was</h1>
-                <h1 className='text-[211px] leading-none font-bold tracking-[0.06em] py-[20px]'>{score}/100</h1>
+                <h1 className='md:text-[61px]'>Your Total Score For &quot;{word}&quot; Was</h1>
+                <h1 className='text-[40px] md:text-[211px] leading-none font-bold tracking-[0.06em] py-[20px]'>{score}/100</h1>
 
-                <button className="bg-[#5CE2C7] px-[66px] py-[15px] mt-[8px] mb-[84px] rounded-[25px] text-black text-[30px] font-bold" onClick={() => reset()}>Play Again</button>
+                <button className="bg-[#5CE2C7] px-[66px] py-[15px] mt-[8px] md:mb-[84px] rounded-[12px] md:rounded-[25px] text-black text-[18px] md:text-[30px] font-bold absolute bottom-[25px] left-[25px] right-[25px] md:static" onClick={() => reset()}>Play Again</button>
                 
-                <div className='absolute bottom-[100px] px-[0px] h-[394px] w-full max-w-[1720px]'>
+                <div className='absolute top-[180px] md:top-[auto] md:bottom-[100px] md:px-0 h-[394px] left-[30px] right-[30px] md:left-auto md:right-auto md:w-full max-w-[1720px]'>
                     {lines.map((line, index) => (
                         <input 
                             key={index} 

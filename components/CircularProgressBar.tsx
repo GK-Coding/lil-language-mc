@@ -8,18 +8,18 @@ const cleanPercentage = (progress: number) => {
     return isNegativeOrNaN ? 0 : isTooHigh ? 100 : +progress;
   };
   
-  const Circle = ({ color, progress, bg }: { color: string, progress?: number, bg?: boolean }) => {
-    const r = 70;
+  const Circle = ({ color, progress, bg, mobile }: { color: string, progress?: number, bg?: boolean, mobile: boolean }) => {
+    const r = mobile ? 20 : 70;
     const circ = 2 * Math.PI * r;
     const strokePct = progress === undefined ? 0 : ((100 - progress) * circ) / 100; // where stroke will start, e.g. from 15% to 100%.
     return (
       <circle
         r={r}
-        cx={100}
-        cy={100}
+        cx={mobile ? 25 : 100}
+        cy={mobile ? 25 : 100}
         fill="transparent"
-        stroke={!bg ? progress !== 0 ? "url(#linear)" : "" : color} // remove colour as 0% sets full circumference
-        strokeWidth={"20px"}
+        stroke={!bg ? progress !== 0 ? (mobile ? "url(#linear)" : "url(#linear2)") : "" : color} // remove colour as 0% sets full circumference
+        strokeWidth={mobile ? "6px" : "20px"}
         strokeDasharray={circ}
         strokeDashoffset={progress ? strokePct : 0}
         strokeLinecap="round"
@@ -27,14 +27,14 @@ const cleanPercentage = (progress: number) => {
     );
   };
   
-  const Text = ({ text }: { text: string }) => {
+  const Text = ({ text, mobile }: { text: string, mobile: boolean }) => {
     return (
       <text
         x="50%"
         y="50%"
         dominantBaseline="central"
         textAnchor="middle"
-        fontSize={"1.5em"}
+        fontSize={mobile? "0.5em" : "1.5em"}
       >
         {text}
       </text>
@@ -54,18 +54,33 @@ export default function CircularProgressBar({ progress, text, gradient }: { prog
   }, [progress]);
 
   return (
-    <svg width={200} height={200}>
+    <>
+    <svg className="block md:hidden w-50 z-10 min-w-50" width={50} height={50}>
     <defs>
         <linearGradient id="linear" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={gradient[0]}/>
             <stop offset="100%" stopColor={gradient[1]}/>
         </linearGradient>
     </defs>
-      <g transform={`rotate(-90 ${"100 100"})`}>
-        <Circle color="#DDE0E3" bg={true} />
-        <Circle color={"#2fd4e1"} progress={value} />
+      <g transform={`rotate(-90 ${"25 25"})`}>
+        <Circle color="#DDE0E3" bg={true} mobile={true} />
+        <Circle color={"#2fd4e1"} progress={value} mobile={true} />
       </g>
-      <Text text={text} />
+      <Text text={text} mobile={true} />
     </svg>
+    <svg className="hidden md:block" width={200} height={200}>
+    <defs>
+        <linearGradient id="linear2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={gradient[0]}/>
+            <stop offset="100%" stopColor={gradient[1]}/>
+        </linearGradient>
+    </defs>
+      <g transform={`rotate(-90 ${"100 100"})`}>
+        <Circle color="#DDE0E3" bg={true} mobile={false} />
+        <Circle color={"#2fd4e1"} progress={value} mobile={false} />
+      </g>
+      <Text text={text} mobile={false} />
+    </svg>
+    </>
   );
 };
