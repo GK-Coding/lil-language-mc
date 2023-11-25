@@ -23,7 +23,7 @@ export default function Word({word, linesComplete, submit}: {word: string, lines
                 {word.toUpperCase()}
             </Textfit>
             <Textfit mode="single" className='flex-1 text-center md:px-[100px] pt-[5px] md:pt-[20px] h-[40px] leading-none font-bold tracking-[0.06em] md:hidden' max={40}>
-                {word.toUpperCase()}ASA
+                {word.toUpperCase()}
             </Textfit>
         <CircularProgressBar progress={timePercentageLeft} text={`${timeLeft}s`} gradient={["#00C6FF", "#5BE1C6"]} />
         </div>

@@ -82,6 +82,7 @@ export default function FreestyleForm({word}: {word: string}) {
                             onChange={(e) => updateLines(index, e.target.value)} 
                             onKeyPress={(e) => handleKeyPress(e, index)} 
                             value={line} 
+                            enterKeyHint={index === 3 ? "go" : "next"}
                             className="w-full text-[14px] md:text-2xl py-[10px] md:py-[20px] mb-[25px] px-[15px] md:px-[40px] dark:text-[#E1E3E3] rounded-[12px] md:rounded-[25px] bg-transparent border-solid border border-[#1C1E1E]/50 dark:border-[#E1E3E3]/50"
                         />
                     ))}
@@ -107,7 +108,7 @@ export default function FreestyleForm({word}: {word: string}) {
                             onChange={(e) => updateLines(index, e.target.value)} 
                             onKeyPress={(e) => handleKeyPress(e, index)} 
                             value={line} 
-                            className="w-full text-2xl py-[20px] mb-[25px] px-[40px] dark:text-[#E1E3E3] rounded-[25px] bg-transparent border-solid border border-[#1C1E1E]/50 dark:border-[#E1E3E3]/50"
+                            className="w-full text-[14px] md:text-2xl py-[10px] md:py-[20px] mb-[25px] px-[15px] md:px-[40px] dark:text-[#E1E3E3] rounded-[12px] md:rounded-[25px] bg-transparent border-solid border border-[#1C1E1E]/50 dark:border-[#E1E3E3]/50"
                             disabled={true}
                         />
                     ))}

@@ -9,14 +9,14 @@ const cleanPercentage = (progress: number) => {
   };
   
   const Circle = ({ color, progress, bg, mobile }: { color: string, progress?: number, bg?: boolean, mobile: boolean }) => {
-    const r = mobile ? 20 : 70;
+    const r = mobile ? 22.5 : 70;
     const circ = 2 * Math.PI * r;
     const strokePct = progress === undefined ? 0 : ((100 - progress) * circ) / 100; // where stroke will start, e.g. from 15% to 100%.
     return (
       <circle
         r={r}
         cx={mobile ? 25 : 100}
-        cy={mobile ? 25 : 100}
+        cy={mobile ? 30 : 100}
         fill="transparent"
         stroke={!bg ? progress !== 0 ? (mobile ? "url(#linear)" : "url(#linear2)") : "" : color} // remove colour as 0% sets full circumference
         strokeWidth={mobile ? "6px" : "20px"}
@@ -55,14 +55,14 @@ export default function CircularProgressBar({ progress, text, gradient }: { prog
 
   return (
     <>
-    <svg className="block md:hidden w-50 z-10 min-w-50" width={50} height={50}>
+    <svg className="block md:hidden z-10" width={60} height={60}>
     <defs>
         <linearGradient id="linear" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={gradient[0]}/>
             <stop offset="100%" stopColor={gradient[1]}/>
         </linearGradient>
     </defs>
-      <g transform={`rotate(-90 ${"25 25"})`}>
+      <g transform={`rotate(-90 ${"27.5 27.5"})`}>
         <Circle color="#DDE0E3" bg={true} mobile={true} />
         <Circle color={"#2fd4e1"} progress={value} mobile={true} />
       </g>
