@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Image from 'next/image'
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -22,15 +22,15 @@ export default function StartSection() {
     if (countdownActive) {
         return <>
             <div className="absolute top-[25px] left-0 right-0 w-[697px] flex justify-center mx-auto z-10">
-                <button type="button" onClick={() => setDifficulty("easy")} className={(difficulty === "easy" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider"}>Easy</div>
-                </button>
-                <button type="button" onClick={() => setDifficulty("medium")} className={(difficulty === "medium" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider"}>Medium</div>
-                </button>
-                <button type="button" onClick={() => setDifficulty("hard")} className={(difficulty === "hard" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider"}>Hard</div>
-                </button>
+                <div className={(difficulty === "easy" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Easy.svg" height={28.01} width={32.43} alt={"Easy Icon"} className='pr-[10px]' /> Easy</div>
+                </div>
+                <div className={(difficulty === "medium" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Medium.svg" height={28.01} width={32.43} alt={"Medium Icon"} className='pr-[10px]' /> Medium</div>
+                </div>
+                <div className={(difficulty === "hard" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
+                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Hard.svg" height={33.84} width={45.63} alt={"Hard Icon"} className='pr-[10px]' /> Hard</div>
+                </div>
             </div>
             <div className="absolute top-[90px] left-0 right-0 flex justify-center items-center max-w-[1920px] px-[100px] mx-auto">
                 <div className="flex-col justify-center items-center gap-10 flex">
@@ -46,13 +46,13 @@ export default function StartSection() {
         return <>
             <div className="absolute top-[25px] left-0 right-0 w-[697px] flex justify-center mx-auto z-10">
                 <button type="button" onClick={() => setDifficulty("easy")} className={(difficulty === "easy" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider"}>Easy</div>
+                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Easy.svg" height={28.01} width={32.43} alt={"Easy Icon"} className='pr-[10px]' /> Easy</div>
                 </button>
                 <button type="button" onClick={() => setDifficulty("medium")} className={(difficulty === "medium" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider"}>Medium</div>
+                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Medium.svg" height={28.01} width={32.43} alt={"Medium Icon"} className='pr-[10px]' /> Medium</div>
                 </button>
                 <button type="button" onClick={() => setDifficulty("hard")} className={(difficulty === "hard" ? "bg-[#1C1E1E] " : "") + "rounded-[25px] px-[25px] py-[20px] justify-start items-center gap-2.5 flex"}>
-                    <div className={"text-[25px] font-bold tracking-wider"}>Hard</div>
+                    <div className={"text-[25px] font-bold tracking-wider flex flex-row"}><Image src="Hard.svg" height={33.84} width={45.63} alt={"Hard Icon"} className='pr-[10px]' /> Hard</div>
                 </button>
             </div>
             <div className="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center max-w-[1920px] px-[100px] mx-auto">
