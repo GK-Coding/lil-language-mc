@@ -71,7 +71,7 @@ export default function FreestyleForm({word}: {word: string}) {
             <div className="max-w-[1920px] w-full px-[100px] pb-[100px] pt-[25px] mx-auto">
                 <Word word={word} linesComplete={lines.length - 1} submit={submit} />
                 
-                <div className='absolute bottom-[100px] h-[394px] w-full max-w-[1720px]'>
+                <div className='absolute bottom-[100px] px-[0px] h-[394px] w-full max-w-[1720px]'>
                     {lines.map((line, index) => (
                         <input 
                             key={index} 
@@ -96,7 +96,7 @@ export default function FreestyleForm({word}: {word: string}) {
 
                 <button className="bg-[#5CE2C7] px-[66px] py-[15px] mt-[8px] mb-[84px] rounded-[25px] text-black text-[30px] font-bold" onClick={() => reset()}>Play Again</button>
                 
-                <div className='absolute bottom-[100px] h-[394px]'>
+                <div className='absolute bottom-[100px] px-[0px] h-[394px] w-full max-w-[1720px]'>
                     {lines.map((line, index) => (
                         <input 
                             key={index} 

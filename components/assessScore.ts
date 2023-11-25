@@ -12,7 +12,5 @@ export const assessScore = async (lines: string[], word: string) => {
 
     const result = await getRhymes(word, endWords);
 
-    console.log(result)
-
     return result;
 }

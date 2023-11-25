@@ -68,7 +68,6 @@ export async function getRhymes(word: string, wordsToCheck: string[]): Promise<R
     const json: any[] = await res.json();
 
     return json.filter(el => {
-        console.log(el)
         return wordsToCheck.includes(el.word);
     });
 }
@@ -134,8 +133,6 @@ export async function getWordByDifficulty(difficulty: "easy" | "medium" | "hard"
     WHERE Third = ${thirdFromDifficulty(difficulty)}
     ORDER BY RANDOM()
     LIMIT 1;`;
-
-    console.log(response);
 
     return response[0];
 }
