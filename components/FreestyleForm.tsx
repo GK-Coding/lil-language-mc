@@ -91,7 +91,7 @@ export default function FreestyleForm({word}: {word: string}) {
     } else if (pageState === "score") {
         return (
             <div className="max-w-[1920px] w-full px-[100px] pb-[100px] pt-[25px] mx-auto text-center">
-                <h1>Your Total Score For "{word}" Was</h1>
+                <h1>Your Total Score For &quot;{word}&quot; Was</h1>
                 <h1 className='text-[211px] leading-none font-bold tracking-[0.06em] py-[20px]'>{score}/100</h1>
 
                 <button className="bg-[#5CE2C7] px-[66px] py-[15px] mt-[8px] mb-[84px] rounded-[25px] text-black text-[30px] font-bold" onClick={() => reset()}>Play Again</button>
