@@ -5,12 +5,12 @@ import CircularProgressBar from './CircularProgressBar'
 import { Textfit } from "react-textfit";
  
 export default function Word({word, linesComplete, submit}: {word: string, linesComplete: number, submit: () => void}) {
-    const [timeLeft, setTimeLeft] = useState(60);
+    const [timeLeft, setTimeLeft] = useState(30);
     const [timePercentageLeft, setTimePercentageLeft] = useState(100);
 
     useEffect(() => {
         timeLeft > 0 && setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-        timeLeft > 0 && setTimeout(() => setTimePercentageLeft(timePercentageLeft - (100/60)), 1000)
+        timeLeft > 0 && setTimeout(() => setTimePercentageLeft(timePercentageLeft - (100/30)), 1000)
         timeLeft < 1 && setTimeout(() => submit(), 100)
     }, [timeLeft]);
  

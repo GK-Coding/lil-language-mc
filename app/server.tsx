@@ -7,6 +7,14 @@ export type Word = {
     rhymescore: number;
 }
 
+export type RZWord = {
+    word: string;
+    score: number;
+    numSyllables: number;
+    tags: string[];
+    defs: string[];
+}
+
 export async function getPronunciation(word: string) {
     if (word == "") {
         return;
@@ -44,6 +52,25 @@ export async function getRhymeScore(word: string): Promise<number> {
         }
         return 0;
     }, -1);
+}
+
+export async function getRhymes(word: string, wordsToCheck: string[]): Promise<RZWord[]> {
+    if (word == "") {
+        return [];
+    }
+
+    const res = await fetch(`https://api.rhymezone.com/words?k=rza&arhy=1&max=1000&qe=sl&md=fpdlr&sl=${word}`);
+
+    if (!res.ok) {
+        throw new Error('Failed to fetch data');
+    }
+
+    const json: any[] = await res.json();
+
+    return json.filter(el => {
+        console.log(el)
+        return wordsToCheck.includes(el.word);
+    });
 }
 
 export async function importWordToDatabase(word: string) {

@@ -1,0 +1,18 @@
+'use server';
+
+import { getRhymes } from "@/app/server";
+
+export const assessScore = async (lines: string[], word: string) => {
+    const endWords = lines.filter(line => {
+        return line.split(" ").length > 3;
+    }).map(line => {
+        const wordsInLine = line.split(" ");
+        return wordsInLine[wordsInLine.length - 1];
+    });
+
+    const result = await getRhymes(word, endWords);
+
+    console.log(result)
+
+    return result;
+}
