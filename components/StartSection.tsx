@@ -93,7 +93,7 @@ export default function StartSection() {
                         <div className="text-center">
                             <span className="text-[22px] md:text-[61px] font-extrabold tracking-[3.05px]">Your word is </span>
                             <span className="text-[22px] md:text-[61px] font-bold tracking-[-4px]">________<br /></span>
-                            <span className="text-[22px] md:text-[61px] font-extrabold tracking-[3.05px]">Write 4 bars in 30 seconds</span>
+                            <span className="text-[22px] md:text-[61px] font-extrabold tracking-[3.05px]">Write 4 bars in 40 seconds</span>
                         </div>
                         <div className="md:w-[842px] text-center text-[16px] md:text-[24px] font-normal tracking-wide">Bonus: End with the Keyword</div>
                     </div>
