@@ -75,12 +75,6 @@ export default function FreestyleForm({word}: {word: string}) {
         assessScore(lines, word).then(matchedWords => {
             console.log(matchedWords)
             return;
-            setMatchedWordData(matchedWordData);
-            const sum = matchedWords.reduce(function (a, b) {
-                return a + Math.min(100, b['score'])
-            }, 0)
-            setScore(sum / 4);
-            setPageState("score");
         });
     }
 
