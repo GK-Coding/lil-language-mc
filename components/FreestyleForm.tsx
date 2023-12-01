@@ -72,8 +72,9 @@ export default function FreestyleForm({word}: {word: string}) {
     }
 
     const submit = () => {
-        assessScore(lines, word).then(score => {
-            setScore(score);
+        assessScore(lines, word).then(result => {
+            console.log(result);
+            setScore(result.score);
             setPageState("score");
         });
     }

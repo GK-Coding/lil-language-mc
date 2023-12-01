@@ -34,5 +34,9 @@ export const assessScore = async (lines: string[], word: string) => {
 
     console.log(linePronunciations);
 
-    return 100;
+    return {
+        mappedLines,
+        linePronunciations,
+        score: 100
+    };
 }
