@@ -9,7 +9,20 @@ import { redirect, useRouter } from 'next/navigation';
 export default function FreestyleForm({word}: {word: string}) {
     const router = useRouter();
 
-    const [pageState, setPageState] = useState<'intro' | 'rapping' | 'score'>('rapping');
+    const [timeLeft, setTimeLeft] = useState(3);
+    const [countdownActive, setCountdownActive] = useState<boolean>(true);
+
+    const [pageState, setPageState] = useState<'intro' | 'rapping' | 'score'>('intro');
+
+    useEffect(() => {
+        if (countdownActive) {
+            timeLeft > 0 && setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+            timeLeft == 1 && setTimeout(() => {
+                setPageState('rapping');
+                setCountdownActive(false);
+            }, 100)
+        }
+    }, [timeLeft, countdownActive]);
 
     const [lines, setLines] = useState<string[]>(['']);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -66,7 +79,19 @@ export default function FreestyleForm({word}: {word: string}) {
         });
     }
 
-    if (pageState === "rapping") {
+    if (pageState === "intro") {
+        return (
+            <div className="absolute top-[90px] left-0 right-0 flex justify-center items-center max-w-[1920px] px-[100px] mx-auto">
+                <div className="flex-col justify-center items-center gap-10 flex">
+                    <div className="flex-col justify-center items-center flex">
+                        <div className="text-center">
+                            <span className="text-[211px] font-bold tracking-[3.05px]">{timeLeft}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    } else if (pageState === "rapping") {
         return (
             <div className="max-w-[1920px] w-full px-[30px] md:px-[100px] pb-[100px] pt-[25px] mx-auto">
                 <Word word={word} linesComplete={lines.length - 1} submit={submit} />
