@@ -73,7 +73,17 @@ export default function FreestyleForm({word}: {word: string}) {
 
     const submit = () => {
         assessScore(lines, word).then(result => {
-            console.log(result);
+            const { mappedLines, linePronunciations, targetWordPronunciation } = result;
+            
+            const phonemesToTarget = targetWordPronunciation.substring(
+                targetWordPronunciation.lastIndexOf(' ', 
+                    targetWordPronunciation.lastIndexOf('1')
+                )
+            );
+    
+            const lineMatches = linePronunciations.map(linePronunciation => {
+                return linePronunciation.endsWith(phonemesToTarget);
+            })
             // setScore(result.score);
             // setPageState("score");
         });

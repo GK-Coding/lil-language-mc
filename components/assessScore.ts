@@ -6,7 +6,7 @@ import speechPlugin from "compromise-speech";
 import { Word } from "@/types/word";
 nlp.plugin(speechPlugin);
 
-const getData = async (lines: string[], word: string) => {
+export const assessScore = async (lines: string[], word: string) => {
     const eligibleLines = lines.filter(line => {
         return line.split(" ").length >= 3;
     });
@@ -41,25 +41,4 @@ const getData = async (lines: string[], word: string) => {
         linePronunciations,
         targetWordPronunciation
     };
-}
-
-export const assessScore = async (lines: string[], word: string) => {
-    return getData(lines, word).then(data => {
-        const { mappedLines, linePronunciations, targetWordPronunciation } = data;
-        
-        const phonemesToTarget = targetWordPronunciation.substring(
-            targetWordPronunciation.lastIndexOf(' ', 
-                targetWordPronunciation.lastIndexOf('1')
-            )
-        );
-
-        const lineMatches = linePronunciations.map(linePronunciation => {
-            return linePronunciation.endsWith(phonemesToTarget);
-        })
-
-        return {
-            lineMatches,
-            score: 100
-        }
-    })
 }
