@@ -48,7 +48,9 @@ export async function getPronunciations(words: string[]) {
         })
     }
 
-    return wordsWithPronunciations;
+    if (words.length === wordsWithPronunciations.length) {
+        return wordsWithPronunciations;
+    }
 }
 
 export async function getRhymeScore(word: string): Promise<number> {

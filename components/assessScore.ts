@@ -9,17 +9,12 @@ nlp.plugin(speechPlugin);
 export const assessScore = async (lines: string[], word: string) => {
     const eligibleLines = lines.filter(line => {
         return line.split(" ").length >= 3;
-    }); 
+    });
 
-    const result = [];
-
-    for (const line in eligibleLines) {
+    const mappedLines = await Promise.all(eligibleLines.map(async (line) => {
         const trimmed = line.trimEnd();
-        const wordListWithPronunciations = await getPronunciations(trimmed.split(" "))
-        result.push(wordListWithPronunciations.map(async wordInLine => {
-            const doc = nlp(wordInLine.value)
-            //@ts-ignore
-            
+        return await Promise.all(trimmed.split(" ").map(async wordInLine => {
+            const doc = nlp(wordInLine)
             const pronunciation = await getPronunciation(wordInLine);
             return {
                 value: wordInLine,
@@ -29,9 +24,9 @@ export const assessScore = async (lines: string[], word: string) => {
             };
         }));
 
-    }
+    }))
 
     // const result = await getRhymes(word, endWords);
 
-    return result;
+    return mappedLines;
 }
