@@ -31,7 +31,7 @@ export default function FreestyleForm({word}: {word: string}) {
     const [score, setScore] = useState<number>(0);
     
     const reset = () => {
-        router.replace("../../");
+        router.refresh();
     };
 
     useEffect(() => {
