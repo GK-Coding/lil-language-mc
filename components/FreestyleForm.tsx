@@ -20,7 +20,7 @@ export default function FreestyleForm({word}: {word: string}) {
             timeLeft == 1 && setTimeout(() => {
                 setPageState('rapping');
                 setCountdownActive(false);
-            }, 100)
+            }, 1000)
         }
     }, [timeLeft, countdownActive]);
 
