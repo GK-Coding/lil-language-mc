@@ -6,12 +6,10 @@ import speechPlugin from "compromise-speech";
 import { Word } from "@/types/word";
 nlp.plugin(speechPlugin);
 
-export const assessScore = async (lines: string[], word: string) => {
+const getData = async (lines: string[], word: string) => {
     const eligibleLines = lines.filter(line => {
         return line.split(" ").length >= 3;
     });
-
-    const linePronunciations: Array<string> = []
 
     const mappedLines = await Promise.all(eligibleLines.map(async (line, index) => {
         linePronunciations.push("")
@@ -29,14 +27,39 @@ export const assessScore = async (lines: string[], word: string) => {
         }));
 
     }))
-    
-    console.log(mappedLines);
 
-    console.log(linePronunciations);
+    const linePronunciations = await Promise.all(mappedLines.map(async line => {
+        return line.map(word => {
+            return word.pronunciation;
+        }).join(' ');
+    }));
+
+    const targetWordPronunciation: string = await getPronunciation(word);
 
     return {
         mappedLines,
         linePronunciations,
-        score: 100
+        targetWordPronunciation
     };
+}
+
+export const assessScore = async (lines: string[], word: string) => {
+    return getData(lines, word).then(data => {
+        const { mappedLines, linePronunciations, targetWordPronunciation } = data;
+        
+        const phonemesToTarget = targetWordPronunciation.substring(
+            targetWordPronunciation.lastIndexOf(' ', 
+                targetWordPronunciation.lastIndexOf('1')
+            )
+        );
+
+        const lineMatches = linePronunciations.map(linePronunciation => {
+            return linePronunciation.endsWith(phonemesToTarget);
+        })
+
+        return {
+            lineMatches,
+            score: 100
+        }
+    })
 }
