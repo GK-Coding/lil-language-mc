@@ -31,6 +31,9 @@ export default function FreestyleForm({word}: {word: string}) {
     const [score, setScore] = useState<number>(0);
     
     const reset = () => {
+        setPageState('intro');
+        setTimeLeft(3);
+        setCountdownActive(true);
         router.refresh();
     };
 
