@@ -11,11 +11,15 @@ export const assessScore = async (lines: string[], word: string) => {
         return line.split(" ").length >= 3;
     });
 
-    const mappedLines = await Promise.all(eligibleLines.map(async (line) => {
+    const linePronunciations: Array<string> = []
+
+    const mappedLines = await Promise.all(eligibleLines.map(async (line, index) => {
+        linePronunciations.push("")
         const trimmed = line.trimEnd();
         return await Promise.all(trimmed.split(" ").map(async wordInLine => {
             const doc = nlp(wordInLine)
             const pronunciation = await getPronunciation(wordInLine);
+            linePronunciations[index] += linePronunciations[index] === "" ? pronunciation : (" " + pronunciation)
             return {
                 value: wordInLine,
                 //@ts-ignore
@@ -25,8 +29,8 @@ export const assessScore = async (lines: string[], word: string) => {
         }));
 
     }))
+    
+    console.log(mappedLines);
 
-    // const result = await getRhymes(word, endWords);
-
-    return mappedLines;
+    return 100;
 }

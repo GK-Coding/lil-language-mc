@@ -72,9 +72,9 @@ export default function FreestyleForm({word}: {word: string}) {
     }
 
     const submit = () => {
-        assessScore(lines, word).then(matchedWords => {
-            console.log(matchedWords)
-            return;
+        assessScore(lines, word).then(score => {
+            setScore(score);
+            setPageState("score");
         });
     }
 
