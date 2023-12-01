@@ -74,6 +74,12 @@ export default function FreestyleForm({word}: {word: string}) {
     const submit = () => {
         assessScore(lines, word).then(result => {
             console.log(result);
+            const linePronunciation = result.mappedLines.map(line => {
+                return line.map(word => {
+                    return word.pronunciation;
+                }).join(' ');
+            })
+            console.log(linePronunciation)
             // setScore(result.score);
             // setPageState("score");
         });
