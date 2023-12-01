@@ -1,26 +1,37 @@
 'use server';
 
-import { getRhymes } from "@/app/server";
+import { getPronunciation, getPronunciations, getRhymes } from "@/app/server";
 import nlp from "compromise";
 import speechPlugin from "compromise-speech";
+import { Word } from "@/types/word";
 nlp.plugin(speechPlugin);
 
 export const assessScore = async (lines: string[], word: string) => {
-    const endWords = lines.filter(line => {
+    const eligibleLines = lines.filter(line => {
         return line.split(" ").length >= 3;
-    }).map(line2 => {
-        const doc = nlp(line2)
-        const terms = doc.json({
-            trim: true,
-            // @ts-ignore
-            syllables: true,
-        })[0]
-        return terms;
-        const wordsInLine = line2.split(" ");
-        return wordsInLine[wordsInLine.length - 1];
-    });
+    }); 
+
+    const result = [];
+
+    for (const line in eligibleLines) {
+        const trimmed = line.trimEnd();
+        const wordListWithPronunciations = await getPronunciations(trimmed.split(" "))
+        result.push(wordListWithPronunciations.map(async wordInLine => {
+            const doc = nlp(wordInLine.value)
+            //@ts-ignore
+            
+            const pronunciation = await getPronunciation(wordInLine);
+            return {
+                value: wordInLine,
+                //@ts-ignore
+                syllables: doc.syllables(),
+                pronunciation
+            };
+        }));
+
+    }
 
     // const result = await getRhymes(word, endWords);
 
-    return endWords;
+    return result;
 }

@@ -33,6 +33,24 @@ export async function getPronunciation(word: string) {
     return pronTag?.split(":")[1];
 }
 
+export async function getPronunciations(words: string[]) {
+    if (words.length < 1) {
+        return [];
+    }
+
+    const wordsWithPronunciations = []
+
+    for (const word of words) {
+        const pronunciation = await getPronunciation(word);
+        wordsWithPronunciations.push({
+            value: word,
+            pronunciation
+        })
+    }
+
+    return wordsWithPronunciations;
+}
+
 export async function getRhymeScore(word: string): Promise<number> {
     if (word == "") {
         return 0;
