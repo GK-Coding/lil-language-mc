@@ -6,18 +6,16 @@ import speechPlugin from "compromise-speech";
 import { Word } from "@/types/word";
 nlp.plugin(speechPlugin);
 
-export const assessScore = async (lines: string[], word: string) => {
+export const getRhymeData = async (lines: string[], word: string) => {
     const eligibleLines = lines.filter(line => {
         return line.split(" ").length >= 3;
     });
 
     const mappedLines = await Promise.all(eligibleLines.map(async (line, index) => {
-        linePronunciations.push("")
         const trimmed = line.trimEnd();
         return await Promise.all(trimmed.split(" ").map(async wordInLine => {
             const doc = nlp(wordInLine)
             const pronunciation = await getPronunciation(wordInLine);
-            linePronunciations[index] += linePronunciations[index] === "" ? pronunciation : (" " + pronunciation)
             return {
                 value: wordInLine,
                 //@ts-ignore
@@ -41,4 +39,8 @@ export const assessScore = async (lines: string[], word: string) => {
         linePronunciations,
         targetWordPronunciation
     };
+}
+
+export const getScore = async (lines: string[], word: string) => {
+
 }

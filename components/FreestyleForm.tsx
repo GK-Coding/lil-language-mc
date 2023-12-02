@@ -2,7 +2,7 @@
 
 import { useState, useEffect, KeyboardEvent, useRef } from 'react';
 import Word from './Word';
-import { assessScore } from './assessScore';
+import { getScore, getRhymeData } from './assessScore';
 import { RZWord } from '@/app/server';
 import { redirect, useRouter } from 'next/navigation';
 
@@ -72,7 +72,7 @@ export default function FreestyleForm({word}: {word: string}) {
     }
 
     const submit = () => {
-        assessScore(lines, word).then(result => {
+        getRhymeData(lines, word).then(result => {
             const { mappedLines, linePronunciations, targetWordPronunciation } = result;
             
             const phonemesToTarget = targetWordPronunciation.substring(
@@ -83,7 +83,10 @@ export default function FreestyleForm({word}: {word: string}) {
     
             const lineMatches = linePronunciations.map(linePronunciation => {
                 return linePronunciation.endsWith(phonemesToTarget);
-            })
+            }).reduce((acc, val) => acc + (val ? 1 : 0), 0);
+
+            console.log(lineMatches);
+
             // setScore(result.score);
             // setPageState("score");
         });
