@@ -1,4 +1,4 @@
-'use server';
+"use server"
 
 import { getPronunciation, getPronunciations, getRhymes } from "@/app/server";
 import nlp from "compromise";
@@ -39,8 +39,4 @@ export const getRhymeData = async (lines: string[], word: string) => {
         linePronunciations,
         targetWordPronunciation
     };
-}
-
-export const getScore = async (lines: string[], word: string) => {
-
 }

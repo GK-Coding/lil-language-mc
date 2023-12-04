@@ -2,9 +2,11 @@
 
 import { useState, useEffect, KeyboardEvent, useRef } from 'react';
 import Word from './Word';
-import { getScore, getRhymeData } from './assessScore';
 import { RZWord } from '@/app/server';
 import { redirect, useRouter } from 'next/navigation';
+import { arraysEqual } from '@/util';
+import { getRhymeData } from '@/util/nlp';
+import { getScore, perfectRhymeScore, nearRhymeScore, maybeRhymeScore } from '@/util/score';
 
 export default function FreestyleForm({word}: {word: string}) {
     const router = useRouter();
@@ -81,14 +83,38 @@ export default function FreestyleForm({word}: {word: string}) {
                 )
             );
     
-            const lineMatches = linePronunciations.map(linePronunciation => {
+            const perfectRhymes = linePronunciations.map(linePronunciation => {
                 return linePronunciation.endsWith(phonemesToTarget);
             }).reduce((acc, val) => acc + (val ? 1 : 0), 0);
 
-            console.log(lineMatches);
+            console.log(perfectRhymes);
 
-            // setScore(result.score);
-            // setPageState("score");
+            const nearRhymes = linePronunciations.map(linePronunciation => {
+                const phonemesToCheck = linePronunciation.substring(linePronunciation.lastIndexOf(' ', linePronunciation.lastIndexOf('1') ));
+                const vowelPhonemesToCheck = phonemesToCheck.split(' ').filter(phoneme => phoneme.includes('1') || phoneme.includes('0'));
+                const vowelPhonemesToTarget = phonemesToTarget.split(' ').filter(phoneme => phoneme.includes('1') || phoneme.includes('0'));
+                return arraysEqual(vowelPhonemesToCheck, vowelPhonemesToTarget);
+            }).reduce((acc, val) => acc + (val ? 1 : 0), 0) - perfectRhymes;
+
+            console.log(nearRhymes);
+
+            const maybeRhymes = Math.max((linePronunciations.map(linePronunciation => {
+                const phonemesToCheck = linePronunciation.substring(linePronunciation.lastIndexOf(' ', linePronunciation.lastIndexOf('1') ));
+                return phonemesToCheck[0] == phonemesToTarget[0] && phonemesToCheck.length == phonemesToTarget.length;
+            }).reduce((acc, val) => acc + (val ? 1 : 0), 0) - perfectRhymes - nearRhymes), 0);
+
+            console.log(maybeRhymes);
+
+            const score = getScore({
+                rhymeQuality: perfectRhymes * perfectRhymeScore + nearRhymes * nearRhymeScore + maybeRhymes * maybeRhymeScore,
+                syllableMatch: 1,
+                complexity: 1,
+                bonusPoints: 0,
+                penalty: 0
+            });
+
+            setScore(score);
+            setPageState("score");
         });
     }
 
