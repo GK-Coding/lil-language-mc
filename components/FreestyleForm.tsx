@@ -91,8 +91,8 @@ export default function FreestyleForm({word}: {word: string}) {
 
             const nearRhymes = linePronunciations.map(linePronunciation => {
                 const phonemesToCheck = linePronunciation.substring(linePronunciation.lastIndexOf(' ', linePronunciation.lastIndexOf('1') ));
-                const vowelPhonemesToCheck = phonemesToCheck.split(' ').filter(phoneme => phoneme.includes('1') || phoneme.includes('0'));
-                const vowelPhonemesToTarget = phonemesToTarget.split(' ').filter(phoneme => phoneme.includes('1') || phoneme.includes('0'));
+                const vowelPhonemesToCheck = phonemesToCheck.split(' ').filter(phoneme => phoneme.includes('1') || phoneme.includes('0') || phoneme.includes('2'));
+                const vowelPhonemesToTarget = phonemesToTarget.split(' ').filter(phoneme => phoneme.includes('1') || phoneme.includes('0') || phoneme.includes('2'));
                 return arraysEqual(vowelPhonemesToCheck, vowelPhonemesToTarget);
             }).reduce((acc, val) => acc + (val ? 1 : 0), 0) - perfectRhymes;
 
