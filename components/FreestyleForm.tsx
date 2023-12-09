@@ -157,7 +157,7 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
     } else if (pageState === "rapping") {
         return (
             <div className="max-w-[1920px] w-full px-[30px] md:px-[100px] pb-[100px] pt-[25px] mx-auto">
-                <div className={(timePercentageLeft > 75 ? "bg-[#5DE3C8] " : "bg-[#FF0101] ") + getTimePercentageClass(timePercentageLeft) + " absolute left-0 top-0 h-8"}></div>
+                <div className={(timePercentageLeft > 75 ? "bg-[#5DE3C8] " : "bg-[#FF0101] ") + getTimePercentageClass(timePercentageLeft) + " left-0 top-0 h-8"}></div>
                 <div className="flex flex-col w-auto pb-[220px] pt-[132px] mx-auto">
                     <div className="flex w-auto content-center items-center">
                         <h1 className='flex-1 text-center text-[211px] md:px-[100px] pt-[20px] hidden md:block max-h-[211px] leading-none font-bold tracking-[0.06em]'>
