@@ -13,3 +13,18 @@ export function arraysEqual(a: Array<any>, b: Array<any>) {
   }
   return true;
 }
+
+export const getLastWord = (lines: string[]) => {
+  const lastLine = lines[lines.length - 1];
+  const words = lastLine.split(' ');
+  return words[words.length - 1];
+}
+
+export function hasDuplicates(array: Array<any>) {
+  return (new Set(array)).size !== array.length;
+}
+
+export const getTimePercentageClass = (timePercentageLeft: number) => {
+  if (timePercentageLeft === 100) return 'w-full';
+  return `w-[${Math.round(timePercentageLeft)}%]`;
+}

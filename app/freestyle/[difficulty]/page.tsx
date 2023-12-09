@@ -1,11 +1,11 @@
 import { generate, count } from 'random-words'
 import { getWordByDifficulty, getWordData } from '../../server';
 import postgres from 'postgres';
-import Word from '@/components/Word';
 import FreestyleForm from '@/components/FreestyleForm';
 import StartSection from '@/components/StartSection';
+import { Difficulty } from '@/types/difficulty';
 
-export default async function FreestylePage({params: {difficulty}}: {params: {difficulty: "easy" | "medium" | "hard"}}) {
+export default async function FreestylePage({params: {difficulty}}: {params: {difficulty: Difficulty}}) {
   // Function returns one by default but not as array so we explicitly define 1 for consistency
   const words = generate(1);
   const wordData = await getWordData(words.at(0) ?? "");
@@ -14,7 +14,7 @@ export default async function FreestylePage({params: {difficulty}}: {params: {di
 
   return (
     <main className='mx-auto'>
-      <FreestyleForm word={word!.word} />
+      <FreestyleForm word={word!.word} difficulty={difficulty} />
     </main>
   )
 }

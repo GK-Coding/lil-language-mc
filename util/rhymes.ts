@@ -7,9 +7,7 @@ import { Word } from "@/types/word";
 nlp.plugin(speechPlugin);
 
 export const getRhymeData = async (lines: string[], word: string) => {
-    const eligibleLines = lines.filter(line => {
-        return line.split(" ").length >= 3;
-    });
+    const eligibleLines = lines;
 
     const mappedLines = await Promise.all(eligibleLines.map(async (line, index) => {
         const trimmed = line.trimEnd();
