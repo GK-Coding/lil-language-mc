@@ -9,6 +9,10 @@ import { getScore, perfectRhymeScore, nearRhymeScore, maybeRhymeScore, getSyllab
 import { syllable } from 'syllable';
 import { Difficulty } from '@/types/difficulty';
 
+const calculateColor = (percentage: number) => {
+    return (percentage > 75 ? "bg-[#5DE3C8]" : (percentage > 50 ? "bg-[#5DE36A]" : (percentage > 25 ? "bg-[#E0E35D]" : (percentage > 10 ? "bg-[#FF7B01]" : "bg-[#FF0101]"))));
+}
+
 export default function FreestyleForm({ word, difficulty }: { word: string, difficulty: Difficulty }) {
     const router = useRouter();
 
@@ -32,8 +36,8 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
 
     useEffect(() => {
         timeLeft > 0 && setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-        timeLeft > 0 && pageState === "rapping" && setTimeout(() => setTimePercentageLeft(timePercentageLeft - (100 / 40)), 1000)
-        timeLeft < 1 && setTimeout(() => submit(), 100)
+        timePercentageLeft > 0 && pageState === "rapping" && setTimeout(() => setTimePercentageLeft(timeLeft / 40 * 100), 1000)
+        timeLeft < 1 && setTimeout(() => submit(), 1000)
     }, [timeLeft]);
 
     const [lines, setLines] = useState<string[]>(['']);
@@ -45,6 +49,8 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
         setPageState('intro');
         setCountdownTimeLeft(3);
         setCountdownActive(true);
+        setTimeLeft(40);
+        setTimePercentageLeft(100);
         router.refresh();
     };
 
@@ -157,7 +163,9 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
     } else if (pageState === "rapping") {
         return (
             <div className="max-w-[1920px] w-full px-[30px] md:px-[100px] pb-[100px] pt-[25px] mx-auto">
-                <div className={(timePercentageLeft > 75 ? "bg-[#5DE3C8] " : "bg-[#FF0101] ") + getTimePercentageClass(timePercentageLeft) + " left-0 top-0 h-8"}></div>
+                <div className={"absolute left-0 top-0 h-8 w-full"}>
+                <div className={`h-full transition-width ease-linear duration-[990ms] ` + calculateColor(timePercentageLeft)} style={{"width": timePercentageLeft + "%"}}></div>
+                </div>
                 <div className="flex flex-col w-auto pb-[220px] pt-[132px] mx-auto">
                     <div className="flex w-auto content-center items-center">
                         <h1 className='flex-1 text-center text-[211px] md:px-[100px] pt-[20px] hidden md:block max-h-[211px] leading-none font-bold tracking-[0.06em]'>
