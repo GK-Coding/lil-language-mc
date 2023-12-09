@@ -1,7 +1,6 @@
 import { generate, count } from 'random-words'
 import { getWordByDifficulty, getWordData } from './server';
 import postgres from 'postgres';
-import Word from '@/components/Word';
 import FreestyleForm from '@/components/FreestyleForm';
 import StartSection from '@/components/StartSection';
 
