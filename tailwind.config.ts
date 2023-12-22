@@ -9,6 +9,7 @@ const config: Config = {
   theme: {
     fontFamily: {
       sans: ['neulis-sans', 'sans-serif'],
+      display: ['termina', 'sans-serif'],
     },
     extend: {
       backgroundImage: {

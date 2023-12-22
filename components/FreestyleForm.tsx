@@ -1,12 +1,10 @@
 'use client'
 
 import { useState, useEffect, KeyboardEvent, useRef } from 'react';
-import { RZWord } from '@/app/server';
 import { redirect, useRouter } from 'next/navigation';
 import { arraysEqual, getLastWord, getTimePercentageClass } from '@/util';
 import { getRhymeData } from '@/util/rhymes';
 import { getScore, perfectRhymeScore, nearRhymeScore, maybeRhymeScore, getSyllableMatch, getBonusPoints, getComplexity, getPenalty, getWordCountPenalty } from '@/util/score';
-import { syllable } from 'syllable';
 import { Difficulty } from '@/types/difficulty';
 
 const calculateColor = (percentage: number) => {
@@ -32,16 +30,16 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
     }, [countdownTimeLeft, countdownActive]);
 
     const [timePercentageLeft, setTimePercentageLeft] = useState(100);
-    const [timeLeft, setTimeLeft] = useState(40);
+    const [timeLeft, setTimeLeft] = useState(1000);
 
     useEffect(() => {
         timeLeft > 0 && setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-        timePercentageLeft > 0 && pageState === "rapping" && setTimeout(() => setTimePercentageLeft(timeLeft / 40 * 100), 1000)
+        timePercentageLeft > 0 && pageState === "rapping" && setTimeout(() => setTimePercentageLeft(timeLeft / 1000 * 100), 1000)
         timeLeft < 1 && setTimeout(() => submit(), 1000)
     }, [timeLeft]);
 
     const [lines, setLines] = useState<string[]>(['']);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
 
     const [score, setScore] = useState<number>(0);
 
@@ -49,8 +47,10 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
         setPageState('intro');
         setCountdownTimeLeft(3);
         setCountdownActive(true);
-        setTimeLeft(40);
+        setTimeLeft(1000);
         setTimePercentageLeft(100);
+        setLines(['']);
+        setScore(0);
         router.refresh();
     };
 
@@ -68,7 +68,7 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
         setLines(newLines);
     }
 
-    const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
+    const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>, index: number) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             if (index === lines.length - 1 && index < 3) {
@@ -162,44 +162,50 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
         )
     } else if (pageState === "rapping") {
         return (
-            <div className="max-w-[1920px] w-full px-[30px] md:px-[100px] pb-[100px] pt-[25px] mx-auto">
+            <div className="w-full px-[30px] md:px-[100px] pb-[100px] pt-[25px] mx-auto flex flex-col min-h-[100vh]">
                 <div className={"absolute left-0 top-0 h-8 w-full"}>
-                <div className={`h-full transition-width ease-linear duration-[990ms] ` + calculateColor(timePercentageLeft)} style={{"width": timePercentageLeft + "%"}}></div>
+                    <div className={`h-full transition-width ease-linear duration-[990ms] ` + calculateColor(timePercentageLeft)} style={{"width": timePercentageLeft + "%"}}></div>
                 </div>
-                <div className="flex flex-col w-auto pb-[220px] pt-[132px] mx-auto">
+                <div className="flex flex-col w-auto pb-[220px] pt-[100px] mx-auto">
                     <div className="flex w-auto content-center items-center">
-                        <h1 className='flex-1 text-center text-[211px] md:px-[100px] pt-[20px] hidden md:block max-h-[211px] leading-none font-bold tracking-[0.06em]'>
+                        <h1 className='flex-1 text-center pt-[20px] hidden md:block leading-none font-bold tracking-[0.06em] font-display clamp-word'>
                             {word.toUpperCase()}
                         </h1>
-                        <h1 className='flex-1 text-center text-[40px] md:px-[100px] pt-[5px] md:pt-[20px] h-[40px] leading-none font-bold tracking-[0.06em] md:hidden'>
+                        <h1 className='flex-1 text-center text-[40px] md:px-[100px] pt-[5px] md:pt-[20px] h-[40px] leading-none font-bold tracking-[0.06em] md:hidden font-display'>
                             {word.toUpperCase()}
                         </h1>
                     </div>
-                    <div className="flex flex-col w-auto content-center items-center pt-[25px]">
-                        <h2 className='flex-1 text-center text-[14px] md:text-[35px] md:px-[100px] pt-[20px] leading-none font-bold tracking-[0.06em]'>
+                    <div className="flex flex-col w-auto content-center items-center">
+                        <h2 className='flex-1 text-center text-[14px] md:text-[1.85vw] md:px-[100px] pt-[15px] leading-none font-bold tracking-[0.06em]'>
                             Write 4 sentences that rhyme with the keyword
                         </h2>
-                        <h3 className='flex-1 text-center text-[12px] md:text-[25px] md:px-[100px] pt-[20px] leading-none tracking-[0.06em]'>
+                        <h3 className='flex-1 text-center text-[12px] md:text-[1.3vw] md:px-[100px] pt-[20px] leading-none tracking-[0.06em] text-[#8F8F8F]'>
                             4-Bar Mode | {difficulty[0].toUpperCase() + difficulty.slice(1)}
                         </h3>
                     </div>
                 </div>
 
-                <div className='absolute top-[140px] md:top-[auto] md:bottom-[100px] md:px-0 h-[394px] left-[30px] right-[30px] md:left-auto md:right-auto md:w-full max-w-[1720px]'>
-                    {lines.map((line, index) => (
-                        <input
-                            key={index}
-                            ref={el => {
-                                if (el) inputRefs.current[index] = el;
-                            }}
-                            type="text"
-                            onChange={(e) => updateLines(index, e.target.value)}
-                            onKeyPress={(e) => handleKeyPress(e, index)}
-                            value={line}
-                            enterKeyHint={index === 3 ? "go" : "next"}
-                            className="w-full text-[14px] md:text-2xl py-[10px] md:py-[20px] mb-[25px] px-[15px] md:px-[40px] dark:text-[#E1E3E3] rounded-[12px] md:rounded-[25px] bg-transparent border-solid border border-[#1C1E1E]/50 dark:border-[#E1E3E3]/50"
-                        />
-                    ))}
+                <div className='md:w-full flex flex-col flex-1'>
+                    {lines.map((line, index) => {
+                        return (
+                            <div key={index} className={'p-0 m-0 flex flex-col ' + (index === lines.length - 1 && index === 0 ? "h-full" : (index === lines.length - 1 ? "h-full" : ""))}>
+                                {index !== lines.length - 1 && <span className='rounded-full bg-[#5DE3C8] absolute w-6 h-6 text-center pt-[1.5px] mt-[18px] ml-[49.5px] dark:text-black'>{index + 1}</span>}
+                                <textarea
+                                    placeholder='Type your bars...'
+                                    ref={el => {
+                                        if (el) inputRefs.current[index] = el;
+                                    }}
+                                    onChange={e => {
+                                        updateLines(index, e.target.value);
+                                    }}
+                                    onKeyPress={(e) => handleKeyPress(e, index)}
+                                    value={line}
+                                    draggable={false}
+                                    className={"text-start w-full text-[14px] md:text-2xl py-[10px] md:pt-[24px] pr-[15px] md:pr-[40px] dark:text-[#E1E3E3] bg-[#1C1E1E] flex-1 leading-snug " + (index === lines.length - 1 && index === 0 ? "rounded-[12px] md:rounded-[25px] pl-8" : (index === lines.length - 1 ? "rounded-b-[12px] md:rounded-b-[25px] pl-8" : (index === 0 ? "rounded-t-[12px] md:rounded-t-[25px] border-b-2 border-[#343737] pl-[84.5px] h-full" : "border-b-2 border-[#343737] pl-[84.5px] h-full")))}
+                                />
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         )
@@ -213,17 +219,16 @@ export default function FreestyleForm({ word, difficulty }: { word: string, diff
 
                 <div className='absolute top-[180px] md:top-[auto] md:bottom-[100px] md:px-0 h-[394px] left-[30px] right-[30px] md:left-auto md:right-auto md:w-full max-w-[1720px]'>
                     {lines.map((line, index) => (
-                        <input
+                        <textarea
                             key={index}
                             ref={el => {
                                 if (el) inputRefs.current[index] = el;
                             }}
-                            type="text"
                             onChange={(e) => updateLines(index, e.target.value)}
                             onKeyPress={(e) => handleKeyPress(e, index)}
                             value={line}
                             className="w-full text-[14px] md:text-2xl py-[10px] md:py-[20px] mb-[25px] px-[15px] md:px-[40px] dark:text-[#E1E3E3] rounded-[12px] md:rounded-[25px] bg-transparent border-solid border border-[#1C1E1E]/50 dark:border-[#E1E3E3]/50"
-                            disabled={true}
+                            readOnly={true}
                         />
                     ))}
                 </div>

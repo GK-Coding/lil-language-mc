@@ -40,3 +40,15 @@ h1 {
   font-size: 22px;
   font-weight: 800;
 }
+
+@layer base {
+  textarea {
+    resize: none;
+  }
+}
+
+@layer utilities {
+  .clamp-word {
+    font-size: clamp(45px, 6.9vw, 211px);
+  }
+}

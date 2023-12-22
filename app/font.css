@@ -26,12 +26,76 @@
  * neulis-sans-hairline:
  *   - http://typekit.com/eulas/00000000000000007750b290
  *   - http://typekit.com/eulas/00000000000000007750b29b
+ * termina:
+ *   - http://typekit.com/eulas/00000000000000007735b212
+ *   - http://typekit.com/eulas/00000000000000007735b216
+ *   - http://typekit.com/eulas/00000000000000007735b219
+ *   - http://typekit.com/eulas/00000000000000007735b21c
+ *   - http://typekit.com/eulas/00000000000000007735b21e
+ *   - http://typekit.com/eulas/00000000000000007735b220
+ *   - http://typekit.com/eulas/00000000000000007735b222
+ *   - http://typekit.com/eulas/00000000000000007735b224
+ *   - http://typekit.com/eulas/00000000000000007735b226
  *
  * © 2009-2023 Adobe Systems Incorporated. All Rights Reserved.
  */
-/*{"last_published":"2023-11-24 16:44:04 UTC"}*/
+/*{"last_published":"2023-12-22 16:19:07 UTC"}*/
 
-@import url("https://p.typekit.net/p.css?s=1&k=egs2qnv&ht=tk&f=53796.53797.53798.53799.53800.53801.53802.53803.53804.53805.53806.53807.53808.53809.53810.53811.53812.53813.53814.53815&a=69856271&app=typekit&e=css");
+@import url("https://p.typekit.net/p.css?s=1&k=egs2qnv&ht=tk&f=28965.28966.28971.28977.28982.28986.28991.28992.28993.53796.53797.53798.53799.53800.53801.53802.53803.53804.53805.53806.53807.53808.53809.53810.53811.53812.53813.53814.53815&a=69856271&app=typekit&e=css");
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/c7d058/00000000000000007735b212/30/l?subset_id=2&fvd=n1&v=3") format("woff2"),url("https://use.typekit.net/af/c7d058/00000000000000007735b212/30/d?subset_id=2&fvd=n1&v=3") format("woff"),url("https://use.typekit.net/af/c7d058/00000000000000007735b212/30/a?subset_id=2&fvd=n1&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:100;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/8fb82c/00000000000000007735b216/30/l?subset_id=2&fvd=n2&v=3") format("woff2"),url("https://use.typekit.net/af/8fb82c/00000000000000007735b216/30/d?subset_id=2&fvd=n2&v=3") format("woff"),url("https://use.typekit.net/af/8fb82c/00000000000000007735b216/30/a?subset_id=2&fvd=n2&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:200;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/3a0b27/00000000000000007735b219/30/l?subset_id=2&fvd=n3&v=3") format("woff2"),url("https://use.typekit.net/af/3a0b27/00000000000000007735b219/30/d?subset_id=2&fvd=n3&v=3") format("woff"),url("https://use.typekit.net/af/3a0b27/00000000000000007735b219/30/a?subset_id=2&fvd=n3&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:300;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/1d76ab/00000000000000007735b21c/30/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff2"),url("https://use.typekit.net/af/1d76ab/00000000000000007735b21c/30/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff"),url("https://use.typekit.net/af/1d76ab/00000000000000007735b21c/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:400;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/3e72b6/00000000000000007735b21e/30/l?subset_id=2&fvd=n5&v=3") format("woff2"),url("https://use.typekit.net/af/3e72b6/00000000000000007735b21e/30/d?subset_id=2&fvd=n5&v=3") format("woff"),url("https://use.typekit.net/af/3e72b6/00000000000000007735b21e/30/a?subset_id=2&fvd=n5&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:500;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/275a7d/00000000000000007735b220/30/l?subset_id=2&fvd=n6&v=3") format("woff2"),url("https://use.typekit.net/af/275a7d/00000000000000007735b220/30/d?subset_id=2&fvd=n6&v=3") format("woff"),url("https://use.typekit.net/af/275a7d/00000000000000007735b220/30/a?subset_id=2&fvd=n6&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:600;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/574117/00000000000000007735b222/30/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"),url("https://use.typekit.net/af/574117/00000000000000007735b222/30/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"),url("https://use.typekit.net/af/574117/00000000000000007735b222/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:700;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/3046cd/00000000000000007735b224/30/l?subset_id=2&fvd=n8&v=3") format("woff2"),url("https://use.typekit.net/af/3046cd/00000000000000007735b224/30/d?subset_id=2&fvd=n8&v=3") format("woff"),url("https://use.typekit.net/af/3046cd/00000000000000007735b224/30/a?subset_id=2&fvd=n8&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:800;font-stretch:normal;
+}
+
+@font-face {
+font-family:"termina";
+src:url("https://use.typekit.net/af/8a0f0c/00000000000000007735b226/30/l?subset_id=2&fvd=n9&v=3") format("woff2"),url("https://use.typekit.net/af/8a0f0c/00000000000000007735b226/30/d?subset_id=2&fvd=n9&v=3") format("woff"),url("https://use.typekit.net/af/8a0f0c/00000000000000007735b226/30/a?subset_id=2&fvd=n9&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:900;font-stretch:normal;
+}
 
 @font-face {
 font-family:"neulis-sans-hairline";
@@ -153,5 +217,6 @@ src:url("https://use.typekit.net/af/98dc3c/00000000000000007750b2a0/30/l?primer=
 font-display:auto;font-style:normal;font-weight:800;font-stretch:normal;
 }
 
+.tk-termina { font-family: "termina",sans-serif; }
 .tk-neulis-sans-hairline { font-family: "neulis-sans-hairline",sans-serif; }
 .tk-neulis-sans { font-family: "neulis-sans",sans-serif; }
