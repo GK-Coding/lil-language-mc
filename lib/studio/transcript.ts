@@ -50,17 +50,14 @@ export class TranscriptTrail {
       if (lastAnchor >= 0) parts = [...segment.words.slice(0, committed).map(word => word.text), ...parts.slice(lastAnchor + 1)];
     }
     const matches = align(segment.words, parts);
-    let arrival = at;
     segment.words = parts.map((part, index) => {
       const previous = matches.get(index);
       const same = Boolean(previous && normalized(previous.text) === normalized(part));
       const confirmations = same ? previous!.confirmations + 1 : 1;
-      const appears = previous ? previous.at : arrival;
-      if (!previous) arrival += Math.min(.09, .7 / Math.max(1, parts.length - matches.size));
+      const appears = previous ? previous.at : at;
       return { id: previous?.id || 'word-' + this.counter++, segment: id, text: part, at: appears, confirmations, settled: final || (confirmations >= 2 && index < parts.length - 2) };
     });
-    if (this.segments.length > 100) this.segments = this.segments.slice(-100);
-    return this.segments.flatMap(value => value.words).slice(-1600);
+    return this.segments.flatMap(value => value.words);
   }
 }
 
@@ -85,4 +82,23 @@ export function transcriptRows(words: StudioWord[]): TranscriptRow[] {
   }
   flush();
   return rows;
+}
+
+/** Tentative hypotheses stay in the particle frontier; published words never retract. */
+export class StableTranscript {
+  private words: StudioWord[] = [];
+  private published = new Set<string>();
+  clear() { this.words = []; this.published.clear(); }
+  update(snapshot: StudioWord[], at: number, scripted = false) {
+    const blockedSegments = new Set<string>();
+    for (const word of snapshot) {
+      if (this.published.has(word.id)) continue;
+      const segment = word.segment || 'default';
+      if (blockedSegments.has(segment)) continue;
+      if (!word.settled && !scripted) { blockedSegments.add(segment); continue; }
+      this.published.add(word.id);
+      this.words.push({ ...word, at, settled: true });
+    }
+    return { words: this.words.slice(), pending: snapshot.filter(word => word.segment === snapshot[snapshot.length - 1]?.segment && !this.published.has(word.id)).length };
+  }
 }
