@@ -8,6 +8,7 @@ import { StableTranscript, TranscriptTrail, transcriptRows } from '@/lib/studio/
 import { DEMO_LINES, PERFORMANCES } from '@/lib/studio/demo';
 import { StudioBeat } from '@/lib/studio/audio';
 import { LiveSpeech, speechCapabilities } from '@/lib/studio/speech';
+import { alignPronunciation, pronunciationWords, HeardPhone, SpokenSound } from '@/lib/studio/pronunciation';
 import PerformancePlayer, { PerformanceControl } from './PerformancePlayer';
 import AudioWaveform from './AudioWaveform';
 import SpeechParticles from './SpeechParticles';
@@ -32,11 +33,13 @@ function timeLabel(seconds: number) {
 
 const LyricWord = memo(function LyricWord({ word, mark, dimmed }: { word: StudioWord; mark?: RhymeMark; dimmed: boolean }) {
   return <span className={'studio-word' + (!word.settled ? ' is-provisional' : '') + (mark ? ' is-linked' : '') + (mark?.near ? ' is-near' : '') + (dimmed ? ' is-dimmed' : '')}
-    style={{ '--rhyme-color': mark ? COLORS[mark.color] : 'transparent' } as CSSProperties} data-word-id={word.id} data-rhyme-family={mark?.familyId}>
+    style={{ '--rhyme-color': mark ? COLORS[mark.color] : 'transparent', '--formation-delay': (word.formationDelay || 0) + 'ms', '--highlight-delay': (word.formationDelay || 0) + 'ms' } as CSSProperties}
+    onAnimationEnd={event => { if (event.animationName === 'studio-word-arrive') event.currentTarget.style.setProperty('--highlight-delay', '0ms'); }}
+    data-word-id={word.id} data-word-phase={word.settled ? 'ink' : 'dust'} data-rhyme-family={mark?.familyId} data-pronunciation={word.spoken?.source} aria-hidden={!word.settled || undefined}>
     {mark && <span className="studio-marker" aria-hidden="true" />}
     <span className="studio-word-text">{word.text}</span>
   </span>;
-}, (a, b) => a.word.id === b.word.id && a.word.text === b.word.text && a.word.settled === b.word.settled && a.mark?.familyId === b.mark?.familyId && a.mark?.color === b.mark?.color && a.mark?.near === b.mark?.near && a.dimmed === b.dimmed);
+}, (a, b) => a.word.id === b.word.id && a.word.text === b.word.text && a.word.settled === b.word.settled && a.word.spoken?.phones === b.word.spoken?.phones && a.mark?.familyId === b.mark?.familyId && a.mark?.color === b.mark?.color && a.mark?.near === b.mark?.near && a.dimmed === b.dimmed);
 
 export default function LiveStudio() {
   const [source, setSource] = useState<Source>('demo');
@@ -54,6 +57,9 @@ export default function LiveStudio() {
   const [beatPosition, setBeatPosition] = useState(0);
   const [following, setFollowing] = useState(true);
   const [pendingWords, setPendingWords] = useState(0);
+  const [previewWords, setPreviewWords] = useState<StudioWord[]>([]);
+  const [soundState, setSoundState] = useState<'loading' | 'ready' | 'unavailable' | ''>('');
+  const [soundMb, setSoundMb] = useState(0);
   const [focusedFamily, setFocusedFamily] = useState<string | null>(null);
   const [micAvailable, setMicAvailable] = useState(true);
   const [tapCount, setTapCount] = useState(0);
@@ -75,6 +81,7 @@ export default function LiveStudio() {
   const viewportRef = useRef<HTMLDivElement>(null);
   const followingRef = useRef(true);
   const wordsRef = useRef<StudioWord[]>([]);
+  const spoken = useRef(new Map<string, SpokenSound>());
   const lexicon = useRef<Lexicon | null>(null);
   const beat = useRef<StudioBeat | null>(null);
   const speech = useRef<LiveSpeech | null>(null);
@@ -110,17 +117,33 @@ export default function LiveStudio() {
     const snapshot = trail.current.update(id, text, final, clockRef.current);
     const next = published.current.update(snapshot, clockRef.current, sourceRef.current === 'demo');
     setPendingWords(next.pending);
+    setPreviewWords(next.preview.map(word=>({...word,settled:false})));
     if (next.words.length !== wordsRef.current.length) {
-      wordsRef.current = next.words;
-      setWords(next.words);
-      if (lexicon.current) setAnalysis(rhymeSession.current.update(next.words, lexicon.current, nearRef.current));
+      const enriched = next.words.map(word=>spoken.current.has(word.id)?{...word,spoken:spoken.current.get(word.id)}:word);
+      wordsRef.current = enriched;
+      setWords(enriched);
+      if (lexicon.current) setAnalysis(rhymeSession.current.update(enriched, lexicon.current, nearRef.current));
     }
     lastResult.current = performance.now();
   }, []);
 
+  const hearPronunciation = useCallback((id: string, phones: HeardPhone[], text: string) => {
+    if(!lexicon.current)return;
+    const segment=wordsRef.current.filter(word=>word.segment===id);
+    const full=pronunciationWords(segment,text,lexicon.current);
+    const heard=alignPronunciation(full,phones,lexicon.current);
+    for(const id of heard.keys())if(!segment.some(word=>word.id===id))heard.delete(id);
+    if(!heard.size)return;
+    heard.forEach((value,key)=>spoken.current.set(key,value));
+    const enriched=wordsRef.current.map(word=>spoken.current.has(word.id)?{...word,spoken:spoken.current.get(word.id)}:word);
+    wordsRef.current=enriched;setWords(enriched);
+    setAnalysis(rhymeSession.current.update(enriched,lexicon.current,nearRef.current));
+  },[]);
+
   const clearTrail = useCallback(() => {
     wordsRef.current = trail.current.clear();
     published.current.clear(); rhymeSession.current.clear();
+    spoken.current.clear();setPreviewWords([]);
     setWords([]); setPendingWords(0); setAnalysis(EMPTY_ANALYSIS); setFocusedFamily(null);
     followingRef.current = true; setFollowing(true);
     if (viewportRef.current) viewportRef.current.scrollTop = 0;
@@ -145,7 +168,7 @@ export default function LiveStudio() {
     void beat.current?.pause();
     player.current?.pause();
     setAnalyser(null);
-    setPhase('paused'); setPendingWords(0);
+    setPhase('paused'); setPendingWords(0);setPreviewWords([]);
   }, [setActive]);
 
   const reset = useCallback(() => {
@@ -199,6 +222,8 @@ export default function LiveStudio() {
     if (liveSource === 'performance' && !playerPlaying.current) externalPerformance.current = true;
     speech.current?.close();
     const liveSpeech = new LiveSpeech({
+      pronunciation: (id, phones, text) => { if (mounted.current && generation === sourceGeneration.current) hearPronunciation(id,phones,text); },
+      soundState: (state, megabytes) => { if (mounted.current && generation === sourceGeneration.current) {setSoundState(state);setSoundMb(megabytes || 0);} },
       audio: value => { if (mounted.current && generation === sourceGeneration.current) setAnalyser(value); },
       progress: value => { if (mounted.current && generation === sourceGeneration.current) setDownloadMb(value); },
       backend: value => { if (mounted.current && generation === sourceGeneration.current) setBackend(value); },
@@ -213,7 +238,7 @@ export default function LiveStudio() {
         if (!mounted.current || generation !== sourceGeneration.current) return;
         if (liveSource === 'file') {
           // Finish the current particle formation without holding back recognized words.
-          const delay = 600;
+          const delay = 1100;
           setTimeout(() => { if (mounted.current && generation === sourceGeneration.current) { setActive(false); setPhase('complete'); } }, delay);
         } else { setActive(false); setPhase('paused'); }
       }
@@ -309,7 +334,7 @@ export default function LiveStudio() {
   }, [clearTrail, demoEvents, ingest]);
 
   const rows = useMemo(() => transcriptRows(words), [words]);
-  const visibleRows = rows;
+  const visibleRows = useMemo(() => transcriptRows([...words,...previewWords]), [words,previewWords]);
   const families = analysis.families.slice(-8);
   const onPlayerControl = useCallback((control: PerformanceControl | null) => { player.current = control; previousSourceTime.current = null; }, []);
   const onPlayerPlaying = useCallback((playing: boolean) => { playerPlaying.current = playing; }, []);
@@ -410,7 +435,7 @@ export default function LiveStudio() {
         </div>
 
         <div hidden={panel !== 'settings'}>
-          {source !== 'demo' && <div className="studio-voice-options"><label htmlFor="studio-quality">Voice engine</label><select id="studio-quality" value={quality} disabled={running || phase === 'starting'} onChange={event => setQuality(event.target.value as 'accurate' | 'fast')}><option value="accurate">Accuracy first</option><option value="fast">Speed first</option></select><p>Free, local processing. First use downloads a voice model. {backend && 'Running on ' + backend + '.'}</p>{inferenceMs > 0 && <small>Last recognition pass: {(inferenceMs / 1000).toFixed(1)}s</small>}</div>}
+          {source !== 'demo' && <div className="studio-voice-options"><label htmlFor="studio-quality">Voice engine</label><select id="studio-quality" value={quality} disabled={running || phase === 'starting'} onChange={event => setQuality(event.target.value as 'accurate' | 'fast')}><option value="accurate">Accuracy first</option><option value="fast">Speed first</option></select><p>Free, local processing. First use downloads voice and sound models. Audio stays on your device. {backend && 'Running on ' + backend + '.'}</p>{inferenceMs > 0 && <small>Last recognition pass: {(inferenceMs / 1000).toFixed(1)}s</small>}<p role="status">{soundState === 'loading' ? 'Preparing pronunciation matching' + (soundMb ? ' · ' + soundMb + ' MB' : '') : soundState === 'ready' ? 'Matching your actual delivery · ' + words.filter(word=>word.spoken).length + ' words heard' : soundState === 'unavailable' ? 'Sound model unavailable. Using dictionary pronunciations for this session; restart to try again.' : 'Pronunciation matching starts with your audio.'}</p></div>}
           <div className="studio-tuning">
             <div className="studio-tuning-heading"><label htmlFor="studio-tempo">Scroll tempo</label><button onClick={tapTempo} className="studio-tap">{tapCount > 0 && tapCount < 3 ? 'Tap ' + (3 - tapCount) + ' more' : 'Tap to match'}</button></div>
             <div className="studio-tempo-row"><input id="studio-tempo" type="range" min="55" max="180" value={tempo} onChange={event => setTempo(Number(event.target.value))} /><span className="studio-tempo-value">{tempo}<small>BPM</small></span></div>

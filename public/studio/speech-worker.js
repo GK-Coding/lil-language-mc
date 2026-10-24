@@ -43,7 +43,7 @@ self.onmessage = async ({ data }) => {
     const started = performance.now();
     const result = await transcriber(data.audio, { max_new_tokens: 96, return_timestamps: false });
     const text = (Array.isArray(result) ? result[0] : result).text.trim();
-    self.postMessage({ type: 'transcript', id: data.id, text, final: data.final, inferenceMs: Math.round(performance.now() - started) });
+    self.postMessage({ type: 'transcript', id: data.id, text, final: data.final, audio: data.audio, inferenceMs: Math.round(performance.now() - started) }, [data.audio.buffer]);
   } catch (error) {
     self.postMessage({ type: 'error', message: error instanceof Error ? error.message : 'The local voice engine could not start.' });
   }

@@ -94,7 +94,7 @@ test('local capture monitors the selected input and closes every resource', asyn
     constructor() { super(); this.port = { onmessage: null }; captures.push(this); }
   }
   class Worker {
-    constructor() { workers.push(this); this.messages = []; }
+    constructor(url) { workers.push(this); this.url=url; this.messages = []; }
     postMessage(value) { this.messages.push(value); if (value.type === 'load' && automaticReady) queueMicrotask(() => this.onmessage?.({ data: { type: 'ready' } })); }
     terminate() { this.terminated = true; }
   }
@@ -120,6 +120,32 @@ test('local capture monitors the selected input and closes every resource', asyn
       assert.equal(transcripts.at(-1)[1], 'light night');
       live.close();
       assert.equal(mic.stops, 1); assert.ok(workers[0].terminated); assert.ok(contexts[0].closed); assert.equal(analysers.at(-1), null);
+    });
+    await t.test('sound analysis runs beside transcription and both workers are cancelled together', async () => {
+      const mic=track('audio');setup({getUserMedia:async()=>stream([mic])});
+      const heard=[];const live=new LiveSpeech({...callbacks,pronunciation:(...args)=>heard.push(args)});
+      await live.start('microphone');
+      const sound=workers.find(worker=>worker.url.includes('phoneme'));
+      const text=workers.find(worker=>worker.url.includes('speech-worker'));
+      captures[0].port.onmessage({data:new Float32Array(22000).fill(.1)});
+      text.onmessage({data:{type:'transcript',id:1,text:'bag leg',final:false,audio:new Float32Array(22000)}});
+      assert.equal(sound.messages.at(-1).type,'recognize');
+      captures[0].port.onmessage({data:new Float32Array(9000).fill(.1)});
+      assert.equal(text.messages.filter(message=>message.type==='transcribe').length,2);
+      sound.onmessage({data:{type:'pronunciation',id:1,text:'bag leg',phones:[{token:'b',confidence:.9}]}});
+      assert.equal(heard.length,1);assert.equal(heard[0][2],'bag leg');
+      live.close();assert.ok(sound.terminated);assert.ok(text.terminated);assert.equal(mic.stops,1);
+    });
+    await t.test('a sound model failure is visible and leaves transcription available', async () => {
+      setup({getUserMedia:async()=>stream([track('audio')])});const states=[];
+      const live=new LiveSpeech({...callbacks,pronunciation(){},soundState:state=>states.push(state)});
+      await live.start('microphone');
+      const sound=workers.find(worker=>worker.url.includes('phoneme'));
+      const text=workers.find(worker=>worker.url.includes('speech-worker'));
+      sound.onmessage({data:{type:'error',message:'model unavailable'}});
+      assert.equal(states.at(-1),'unavailable');assert.ok(sound.terminated);assert.ok(!text.terminated);
+      captures[0].port.onmessage({data:new Float32Array(22000).fill(.1)});
+      assert.equal(text.messages.at(-1).type,'transcribe');live.close();
     });
     await t.test('tab mode never silently requests the microphone', async () => {
       const audio = track('audio'); const video = track('video'); let micRequests = 0;

@@ -1,5 +1,6 @@
 export type Lexicon = Record<string, string>;
-export type StudioWord = { id: string; text: string; at: number; settled: boolean; segment?: string };
+import type { SpokenSound } from './pronunciation';
+export type StudioWord = { id: string; text: string; at: number; settled: boolean; segment?: string; spoken?: SpokenSound; formationDelay?: number };
 type Syllable = { vowel: string; coda: string[]; stress: number };
 type Pronunciation = { phones: string; syllables: Syllable[] };
 type Candidate = { key: string; text: string; normalized: string; words: StudioWord[]; syllables: Syllable[]; phrase: boolean };
@@ -98,7 +99,9 @@ export function analyzeRhymes(words: StudioWord[], lexicon: Lexicon, includeNear
   const recent = words.slice(-320);
   const candidates: Candidate[] = [];
   const candidateKeys = new Set<string>();
-  const options = recent.map(word => pronunciations(word.text, lexicon));
+  const options = recent.map(word => word.spoken?.source === 'audio' && word.spoken.confidence >= .64
+    ? [{ phones: word.spoken.phones, syllables: parsePhones(word.spoken.phones) }]
+    : pronunciations(word.text, lexicon));
   const add = (span: StudioWord[], syllables: Syllable[], phrase: boolean) => {
     const normalized = span.map(value => normalizeWord(value.text)).join(' ');
     const key = signature(syllables);
@@ -189,10 +192,19 @@ export class RhymeSession {
   private analysis: RhymeAnalysis = { families: [], marks: {} };
   private colors = new Map<string, number>();
   private aliases = new Map<string, string>();
-  clear() { this.analysis = { families: [], marks: {} }; this.colors.clear(); this.aliases.clear(); }
+  private heard = new Map<string, string>();
+  clear() { this.analysis = { families: [], marks: {} }; this.colors.clear(); this.aliases.clear(); this.heard.clear(); }
   update(words: StudioWord[], lexicon: Lexicon, includeNear = true): RhymeAnalysis {
     const fresh = analyzeRhymes(words, lexicon, includeNear, this.colors);
     const marks = { ...this.analysis.marks };
+    // A confident acoustic correction can invalidate an earlier dictionary match.
+    // Preserve the words and colors, but don't preserve a relationship we now hear differently.
+    const changedFamilies = new Set<string>();
+    for (const word of words) if (word.spoken && this.heard.get(word.id) !== word.spoken.phones) {
+      if (marks[word.id]) changedFamilies.add(marks[word.id].familyId);
+      this.heard.set(word.id, word.spoken.phones);
+    }
+    for (const [id, mark] of Object.entries(marks)) if (changedFamilies.has(mark.familyId)) delete marks[id];
     if (!includeNear) for (const [id, mark] of Object.entries(marks)) if (mark.near) delete marks[id];
     const metadata = new Map(this.analysis.families.map(family => [family.id, family]));
     for (const family of fresh.families) {

@@ -90,6 +90,7 @@ export class StableTranscript {
   private published = new Set<string>();
   clear() { this.words = []; this.published.clear(); }
   update(snapshot: StudioWord[], at: number, scripted = false) {
+    let arriving = 0;
     const blockedSegments = new Set<string>();
     for (const word of snapshot) {
       if (this.published.has(word.id)) continue;
@@ -97,8 +98,9 @@ export class StableTranscript {
       if (blockedSegments.has(segment)) continue;
       if (!word.settled && !scripted) { blockedSegments.add(segment); continue; }
       this.published.add(word.id);
-      this.words.push({ ...word, at, settled: true });
+      this.words.push({ ...word, at, settled: true, formationDelay: Math.min(360, arriving++ * 32) });
     }
-    return { words: this.words.slice(), pending: snapshot.filter(word => word.segment === snapshot[snapshot.length - 1]?.segment && !this.published.has(word.id)).length };
+    const preview = snapshot.filter(word => word.segment === snapshot[snapshot.length - 1]?.segment && !this.published.has(word.id)).slice(0,12);
+    return { words: this.words.slice(), pending: preview.length, preview };
   }
 }

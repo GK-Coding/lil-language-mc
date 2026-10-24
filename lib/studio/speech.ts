@@ -1,4 +1,5 @@
 import { SpeechQueue, SpeechWindows } from './pcm.ts';
+import type { HeardPhone } from './pronunciation';
 
 export type SpeechCallbacks = {
   transcript: (id: string, text: string, final: boolean) => void;
@@ -7,6 +8,8 @@ export type SpeechCallbacks = {
   progress?: (megabytes: number) => void;
   backend?: (value: string) => void;
   timing?: (milliseconds: number) => void;
+  pronunciation?: (id: string, phones: HeardPhone[], text: string) => void;
+  soundState?: (state: 'loading' | 'ready' | 'unavailable', megabytes?: number) => void;
   error: (message: string) => void;
   ended: () => void;
 };
@@ -22,6 +25,11 @@ let nextSpeechInstance = 0;
 
 export class LiveSpeech {
   private worker: Worker | null = null;
+  private soundWorker: Worker | null = null;
+  private soundReady = false;
+  private soundBusy = false;
+  private soundQueue: { id: number; audio: Float32Array; final: boolean; text: string }[] = [];
+  private soundTimeout: ReturnType<typeof setTimeout> | null = null;
   private stream: MediaStream | null = null;
   private context: AudioContext | null = null;
   private source: MediaStreamAudioSourceNode | AudioBufferSourceNode | null = null;
@@ -82,6 +90,7 @@ export class LiveSpeech {
       this.source = source;
       source.connect(this.analyser);
       this.callbacks.audio?.(this.analyser);
+      if (this.callbacks.pronunciation) this.loadSoundWorker(generation);
       await this.loadWorker(generation, quality);
       if (generation !== this.generation) return false;
       await context.audioWorklet.addModule('/studio/capture-worklet.js');
@@ -146,6 +155,13 @@ export class LiveSpeech {
           if (data.text) this.callbacks.transcript('local-' + this.id + '-' + data.id, data.text, data.final);
           this.callbacks.timing?.(data.inferenceMs);
           this.callbacks.state('listening');
+          if (this.soundWorker && data.audio instanceof Float32Array) {
+            // Coalesce previews; recognition of sounds never blocks the text worker.
+            this.soundQueue = this.soundQueue.filter(item => item.id !== data.id);
+            this.soundQueue.push({id:data.id,audio:data.audio,final:data.final,text:data.text});
+            if(this.soundQueue.length>4)this.soundQueue.splice(0,this.soundQueue.length-4);
+            this.processSound();
+          }
           this.processNext();
         }
         if (data.type === 'error') {
@@ -161,12 +177,47 @@ export class LiveSpeech {
     if (this.stopped || this.busy || !this.worker) return;
     const chunk = this.queue.shift();
     if (!chunk) {
-      if (this.finishing) { this.close(); this.callbacks.ended(); }
+      if (this.finishing && !this.soundBusy && !this.soundQueue.length) { this.close(); this.callbacks.ended(); }
       return;
     }
     this.busy = true;
     this.callbacks.state('processing');
     this.worker.postMessage({ type: 'transcribe', ...chunk }, [chunk.audio.buffer]);
+  }
+
+  private loadSoundWorker(generation: number) {
+    const worker = new Worker('/studio/phoneme-worker.js', {type:'module'});
+    this.soundWorker = worker;
+    this.callbacks.soundState?.('loading',0);
+    const unavailable = () => {
+      if(generation!==this.generation)return;
+      worker.terminate(); this.soundWorker=null; this.soundQueue=[];this.soundBusy=false;this.soundReady=false;
+      if(this.soundTimeout)clearTimeout(this.soundTimeout);this.soundTimeout=null;
+      this.callbacks.soundState?.('unavailable');this.processNext();
+    };
+    this.soundTimeout=setTimeout(unavailable,240000);
+    worker.onerror=unavailable;
+    worker.onmessage=({data})=>{
+      if(generation!==this.generation)return;
+      if(data.type==='progress')this.callbacks.soundState?.('loading',Math.round(data.bytes/1000000));
+      if(data.type==='ready'){
+        if(this.soundTimeout)clearTimeout(this.soundTimeout);this.soundTimeout=null;
+        this.soundReady=true;this.callbacks.soundState?.('ready');this.processSound();
+      }
+      if(data.type==='pronunciation'){
+        this.soundBusy=false;this.callbacks.pronunciation?.('local-'+this.id+'-'+data.id,data.phones,data.text);
+        this.processSound();this.processNext();
+      }
+      if(data.type==='error')unavailable();
+    };
+    worker.postMessage({type:'load'});
+  }
+
+  private processSound() {
+    if(this.stopped||!this.soundWorker||!this.soundReady||this.soundBusy)return;
+    const chunk=this.soundQueue.shift();if(!chunk)return;
+    this.soundBusy=true;
+    this.soundWorker.postMessage({type:'recognize',...chunk},[chunk.audio.buffer]);
   }
 
   private fail(message: string) { this.close(); this.callbacks.error(message); }
@@ -176,6 +227,9 @@ export class LiveSpeech {
     this.stopped = true;
     this.cancelLoad?.(); this.cancelLoad = null;
     this.worker?.terminate(); this.worker = null;
+    this.soundWorker?.terminate();this.soundWorker=null;
+    if(this.soundTimeout)clearTimeout(this.soundTimeout);this.soundTimeout=null;
+    this.soundQueue=[];this.soundBusy=false;this.soundReady=false;
     if (this.capture) this.capture.port.onmessage = null;
     if (this.source && 'stop' in this.source) { this.source.onended = null; try { this.source.stop(); } catch {} }
     this.source?.disconnect(); this.analyser?.disconnect(); this.capture?.disconnect(); this.silent?.disconnect();
