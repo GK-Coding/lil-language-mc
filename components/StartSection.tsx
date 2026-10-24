@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Waveform } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import Header from './Header';
 import useIsMobile from '../hooks/useIsMobile';
@@ -217,6 +219,7 @@ export default function StartSection() {
           className="hidden lg:flex"
         />
       </div>
+      <div className="flex justify-center mt-7 mb-5"><Link href="/studio" className="inline-flex items-center gap-3 rounded-xl border border-current/20 px-6 py-3 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5"><Waveform size={19} />Live rhyme studio<span className="text-[10px] text-emerald-700 dark:text-[#5CE2C7]">NEW</span></Link></div>
       </div>
       <footer className="w-full mx-auto text-center pb-[20px] opacity-50 font-[neulis-sans] font-bold text-[#565757] hidden lg:block">
         ©{new Date().getFullYear()} LineZero Studio. All rights reserved.

@@ -36,3 +36,5 @@ yarn-error.log*
 next-env.d.ts
 
 .env.local
+# Generated local speech runtime (copied from the pinned npm package)
+/public/studio/vendor/
