@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, Check, CircleNotch, DownloadSimple, Headphones, Microphone, Pause, Play, Sparkle, SpeakerHigh, SpeakerSlash, Waveform, X } from '@phosphor-icons/react';
+import { ArrowCounterClockwise, ArrowLeft, ArrowUpRight, CaretDown, Check, CircleNotch, DownloadSimple, FadersHorizontal, Headphones, Microphone, Pause, Play, Sparkle, SpeakerHigh, SpeakerSlash, X } from '@phosphor-icons/react';
 import { analyzeRhymes, Lexicon, RhymeAnalysis, RhymeMark, StudioWord } from '@/lib/studio/rhyme-engine';
 import { TranscriptTrail, transcriptRows } from '@/lib/studio/transcript';
 import { DEMO_LINES, PERFORMANCES } from '@/lib/studio/demo';
@@ -14,7 +14,7 @@ import AudioWaveform from './AudioWaveform';
 type Source = 'demo' | 'microphone' | 'performance' | 'file';
 type Phase = 'ready' | 'starting' | 'listening' | 'processing' | 'paused' | 'complete';
 const EMPTY_ANALYSIS: RhymeAnalysis = { marks: {}, families: [] };
-const COLORS = ['#b6edb8', '#d0b7f4', '#f1d58e', '#f1b1c5', '#a6c9f2', '#efbe99', '#9bddd6', '#d7d69b', '#bebdf3', '#e2aca0', '#b3d3a4', '#ecb4dc'];
+const COLORS = ['#5ce2c7', '#d0b7f4', '#f1d58e', '#f1b1c5', '#a6c9f2', '#efbe99', '#9bddd6', '#d7d69b', '#bebdf3', '#e2aca0', '#b3d3a4', '#ecb4dc'];
 let dictionaryPromise: Promise<Lexicon> | null = null;
 
 function getLexicon() {
@@ -62,6 +62,9 @@ export default function LiveStudio() {
   const [backend, setBackend] = useState('');
   const [inferenceMs, setInferenceMs] = useState(0);
   const [fileName, setFileName] = useState('');
+  const [panel, setPanel] = useState<'source' | 'settings' | 'rhymes'>('source');
+  const [panelOpen, setPanelOpen] = useState(false);
+  const panelRef = useRef<HTMLDialogElement>(null);
   const audioFile = useRef<File | undefined>(undefined);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -288,8 +291,8 @@ export default function LiveStudio() {
           previousOffsets.current.clear();
           for (const node of nodes) {
             previousOffsets.current.set(node.dataset.rowId || '', node.offsetTop);
-            const age = (scrollRef.current - node.offsetTop) / Math.max(80, node.offsetHeight + 28);
-            node.style.opacity = String(Math.max(.025, 1 - Math.max(0, age - .25) * .3));
+            const age = (scrollRef.current - node.offsetTop) / Math.max(72, node.offsetHeight + 20);
+            node.style.opacity = String(Math.max(.08, 1 - Math.max(0, age - .25) * .13));
           }
           setScroll(scrollRef.current);
         }
@@ -321,10 +324,15 @@ export default function LiveStudio() {
   const onPlayerControl = useCallback((control: PerformanceControl | null) => { player.current = control; previousSourceTime.current = null; }, []);
   const onPlayerPlaying = useCallback((playing: boolean) => { playerPlaying.current = playing; }, []);
   const onExternalOpen = useCallback(() => { externalPerformance.current = true; previousSourceTime.current = null; }, []);
-  const activeBeat = Math.floor(beatPosition) % 4;
   const countIn = source === 'demo' && running && beatPosition < 4;
   const processing = running && (source === 'demo' || phase === 'processing' || performance.now() - lastResult.current < 900);
-  const statusText = !dictionaryReady ? 'Preparing the rhyme engine' : phase === 'starting' ? 'Preparing local voice engine' + (downloadMb ? ' · ' + downloadMb + ' MB loaded' : '') : countIn ? 'Find the pocket' : running ? phase === 'processing' && source !== 'demo' ? 'Transcribing audio locally' : processing ? 'Finding the rhyme' : 'Listening for your next line' : phase === 'complete' ? 'A verse, made visible' : words.length ? 'Your trail is paused' : 'A little sound. A little magic.';
+  const statusText = !dictionaryReady ? 'Preparing rhyme engine' : phase === 'starting' ? 'Preparing local voice engine' + (downloadMb ? ' · ' + downloadMb + ' MB' : '') : countIn ? 'Count in…' : running ? phase === 'processing' && source !== 'demo' ? 'Transcribing on device' : processing ? 'Finding rhymes' : 'Listening' : phase === 'complete' ? 'Session complete' : words.length ? 'Paused' : 'Ready when you are';
+  const sourceLabel = source === 'demo' ? 'Demo' : source === 'microphone' ? 'My mic' : source === 'file' ? 'Audio file' : 'Freestyles';
+  const openPanel = (next: typeof panel) => {
+    setPanel(next);
+    setPanelOpen(true);
+    panelRef.current?.showModal();
+  };
 
   const tapTempo = () => {
     const now = performance.now();
@@ -352,111 +360,87 @@ export default function LiveStudio() {
       event.target.value = '';
     }} />
     <header className="studio-header">
-      <Link href="/" className="studio-brand" aria-label="LLMC home">LLMC<span>alpha</span></Link>
-      <nav className="studio-mode-nav" aria-label="Game modes"><Link href="/">Writing game</Link><span aria-current="page"><Waveform size={16} /> Live studio</span></nav>
-      <Link href="/" className="studio-back"><ArrowLeft size={15} /><span>Back to writing</span></Link>
+      <Link href="/" className="studio-brand" aria-label="Back to LLMC writing game"><ArrowLeft size={15} /><strong>LLMC</strong><span>LIVE</span></Link>
+      <div className="studio-controls">
+        <button className="studio-source-switch" onClick={() => openPanel('source')} aria-haspopup="dialog" aria-expanded={panelOpen && panel === 'source'} aria-label={'Audio source: ' + sourceLabel}>
+          {source === 'microphone' ? <Microphone size={16} /> : source === 'demo' ? <Sparkle size={16} /> : <Headphones size={16} />}<span>{sourceLabel}</span><CaretDown size={12} />
+        </button>
+        <button className="studio-play-button" onClick={() => void start()} disabled={!dictionaryReady} aria-label={phase === 'starting' ? 'Cancel listening' : running ? 'Pause session' : source === 'demo' ? 'Play demo' : source === 'file' ? 'Play audio file' : 'Start listening'}>{running || phase === 'starting' ? <Pause weight="fill" size={16} /> : <Play weight="fill" size={16} />}</button>
+      </div>
+      <div className="studio-actions">
+        <button className={'studio-rhymes-button' + (focusedFamily ? ' has-focus' : '')} onClick={() => openPanel('rhymes')} aria-haspopup="dialog" aria-expanded={panelOpen && panel === 'rhymes'} aria-label={'Rhyme relationships: ' + analysis.families.length + ' families'}><Sparkle size={17} /><span>Rhymes</span><small>{analysis.families.length}</small></button>
+        <button className="studio-icon-button" onClick={() => openPanel('settings')} aria-haspopup="dialog" aria-expanded={panelOpen && panel === 'settings'} aria-label="Studio settings"><FadersHorizontal size={20} /></button>
+      </div>
     </header>
 
-    <div className="studio-workspace">
-      <aside className="studio-source-panel">
-        <p className="studio-eyebrow">THE LIVE RHYME STUDIO</p>
-        <h1>Find your flow.<br /><span>See your sound.</span></h1>
-        <p className="studio-intro">Speak freely. Watch your words turn into a living trail of rhymes.</p>
-
-        <div className="studio-source-tabs" role="group" aria-label="Audio source">
-          <button aria-pressed={source === 'demo'} onClick={() => chooseSource('demo')}><Sparkle size={17} />Demo</button>
-          <button aria-pressed={source === 'microphone'} onClick={() => chooseSource('microphone')}><Microphone size={17} />My mic</button>
-          <button aria-pressed={source === 'performance' || source === 'file'} onClick={() => chooseSource('performance')}><Headphones size={17} />Freestyles</button>
-        </div>
-
-        {source === 'demo' && <section className="studio-source-description">
-          <div className="studio-source-icon"><Waveform size={26} weight="light" /></div>
-          <h2>The midnight session</h2>
-          <p>An original beat and a scripted verse. A small taste of words becoming patterns.</p>
-          <span className="studio-source-badge">Motion demo · {tempo} BPM</span>
-        </section>}
-
-        {source === 'microphone' && <section className="studio-source-description">
-          <div className="studio-source-icon"><Microphone size={26} weight="light" /></div>
-          <h2>This one is yours.</h2>
-          <p>Freestyle into your microphone. The waveform follows your input immediately; the words follow as they are recognized.</p>
-          <span className="studio-source-badge">On-device recognition · English</span><br /><button className="studio-file-button" onClick={() => void openVoiceSample()}>Try voice sample</button>
-          {!micAvailable && <p className="studio-browser-note">Open this studio in a current desktop browser for live listening.</p>}
-        </section>}
-
-        {source === 'file' && <section className="studio-source-description"><h2>{fileName}</h2><p>Play this clip through the local voice engine. Audio and recognition stay on your device.</p><button className="studio-file-button" onClick={() => fileInput.current?.click()}>Choose another audio file</button></section>}
-
-        {source === 'performance' && <section className="studio-performance-library">
-          <p className="studio-small-label">STUDY THE GREATS</p>
-          {PERFORMANCES.map(item => <button key={item.id} className={'studio-performance' + (item.id === performanceId ? ' is-selected' : '')} onClick={() => chooseSource('performance', item.id)}>
-            <span className="studio-performance-art" style={{ backgroundImage: `url(https://i.ytimg.com/vi/${item.id}/hqdefault.jpg)` }} />
-            <span><strong>{item.artist}</strong><small>{item.title} · {item.year}</small></span>
-            {item.id === performanceId ? <Check size={16} /> : <Play size={15} />}
-          </button>)}
-          <PerformancePlayer performance={currentPerformance} onControl={onPlayerControl} onPlaying={onPlayerPlaying} onExternalOpen={onExternalOpen} />
-          <p className="studio-tab-instruction">Press Listen, choose the tab playing the performance, and enable <strong>Share tab audio</strong>.</p>
-          <button className="studio-file-button" onClick={() => fileInput.current?.click()}>Open audio file</button>
-        </section>}
-
-        {source !== 'demo' && <div className="studio-voice-options"><label htmlFor="studio-quality">Voice engine</label><select id="studio-quality" value={quality} disabled={running || phase === 'starting'} onChange={event => setQuality(event.target.value as 'accurate' | 'fast')}><option value="accurate">Accuracy first</option><option value="fast">Speed first</option></select><p>Free, local processing. The first use downloads a voice model. {backend && 'Running on ' + backend + '.'}</p>{inferenceMs > 0 && <small>Last recognition pass: {(inferenceMs / 1000).toFixed(1)}s</small>}</div>}
-
-        <div className="studio-tuning">
-          <div className="studio-tuning-heading"><label htmlFor="studio-tempo">Scroll tempo</label><button onClick={tapTempo} className="studio-tap">{tapCount > 0 && tapCount < 3 ? 'Tap ' + (3 - tapCount) + ' more' : 'Tap to match'}</button></div>
-          <div className="studio-tempo-row"><input id="studio-tempo" type="range" min="55" max="180" value={tempo} onChange={event => setTempo(Number(event.target.value))} /><span className="studio-tempo-value">{tempo}<small>BPM</small></span></div>
-          <div className="studio-tuning-heading"><label htmlFor="studio-delay">Highlighter delay</label><span>{(inkDelay / 1000).toFixed(1)}s</span></div>
-          <input id="studio-delay" type="range" min="200" max="1400" step="50" value={inkDelay} onChange={event => setInkDelay(Number(event.target.value))} />
-          <label className="studio-near-toggle"><input type="checkbox" checked={nearRhymes} onChange={event => setNearRhymes(event.target.checked)} /><span>Include possible rhymes</span></label>
-        </div>
-        <p className="studio-source-footnote"><span className={dictionaryReady ? 'studio-ready-dot' : 'studio-loading-dot'} />{dictionaryReady ? 'Rhyme engine ready' : 'Loading pronunciations'}</p>
-      </aside>
-
-      <section className="studio-main-panel" aria-label="Live rhyme transcript">
-        <div className="studio-session-header"><span><span className={'studio-session-dot' + (running ? ' is-running' : '')} />{source === 'demo' ? 'DEMO SESSION' : source === 'microphone' ? 'YOUR FREESTYLE' : source === 'file' ? 'AUDIO CLIP · LOCAL' : currentPerformance.artist.toUpperCase() + ' · LIVE LISTENING'}</span><span className="studio-time">{timeLabel(clock)}</span></div>
-
-        <div className={'studio-stage' + (running ? ' is-active' : '')} data-testid="rhyme-stage">
-          <div className="studio-trail" aria-label="Transcript" aria-live="off">
-            <div ref={linesRef} className="studio-lines" style={{ transform: `translate3d(0, ${-scroll}px, 0)` }}>
-              {visibleRows.map(row => <div key={row.id} data-row-id={row.id} className="studio-line">
-                {row.words.filter(word => word.at <= clock + 0.05).map(word => <LyricWord key={word.id} word={word} mark={analysis.marks[word.id]} dimmed={Boolean(focusedFamily && analysis.marks[word.id]?.familyId !== focusedFamily)} />)}
-              </div>)}
-            </div>
+    <section className="studio-main-panel" aria-label="Live rhyme transcript">
+      <div className="studio-session-header"><span><span className={'studio-session-dot' + (running ? ' is-running' : '')} />{source === 'demo' ? 'DEMO SESSION' : source === 'microphone' ? 'YOUR FREESTYLE' : source === 'file' ? fileName : currentPerformance.artist.toUpperCase()}</span><span>{words.length} words</span></div>
+      <div className={'studio-stage' + (running ? ' is-active' : '')} data-testid="rhyme-stage">
+        <div className="studio-trail" aria-label="Transcript" aria-live="off">
+          <div ref={linesRef} className="studio-lines" style={{ transform: `translate3d(0, ${-scroll}px, 0)` }}>
+            {visibleRows.map(row => <div key={row.id} data-row-id={row.id} className="studio-line">
+              {row.words.filter(word => word.at <= clock + 0.05).map(word => <LyricWord key={word.id} word={word} mark={analysis.marks[word.id]} dimmed={Boolean(focusedFamily && analysis.marks[word.id]?.familyId !== focusedFamily)} />)}
+            </div>)}
           </div>
-          {!words.length && <div className="studio-empty-verse"><p>Your next line<br /><span>starts something.</span></p></div>}
-          <div className={'studio-processing' + (running ? ' is-listening' : '')} role="status" aria-live="polite">
-            <AudioWaveform analyser={analyser} active={running || phase === 'starting'} />
-            {(!dictionaryReady || phase === 'starting') && <CircleNotch size={18} className="studio-spin" />}
-            <span>{statusText}</span>
+        </div>
+        {!words.length && <div className="studio-empty-verse"><p>{source === 'demo' ? 'Press play. See the rhymes.' : 'Your next line starts here.'}</p></div>}
+      </div>
+      {error && <div className="studio-error" role="alert"><span>{error}</span><button className="studio-icon-button" aria-label="Dismiss message" onClick={() => setError('')}><X size={18} /></button></div>}
+      <footer className="studio-feedback">
+        <div className="studio-processing" role="status" aria-live="polite">{(!dictionaryReady || phase === 'starting') && <CircleNotch size={14} className="studio-spin" />}<span>{statusText}</span></div>
+        <AudioWaveform analyser={analyser} active={running || phase === 'starting'} />
+        <div className="studio-timing"><span>{tempo} BPM</span><time className="studio-time">{timeLabel(clock)}</time></div>
+      </footer>
+    </section>
+
+    <dialog ref={panelRef} className="studio-drawer" aria-labelledby="studio-drawer-title" onClose={() => setPanelOpen(false)} onClick={event => { if (event.target === event.currentTarget) panelRef.current?.close(); }}>
+      <div className="studio-drawer-heading"><h2 id="studio-drawer-title">{panel === 'source' ? 'Audio source' : panel === 'settings' ? 'Studio settings' : 'Rhyme relationships'}</h2><button className="studio-icon-button" aria-label="Close panel" onClick={() => panelRef.current?.close()}><X size={20} /></button></div>
+      <div className="studio-drawer-content">
+        <div hidden={panel !== 'source'}>
+          <div className="studio-source-tabs" role="group" aria-label="Audio source">
+            <button aria-pressed={source === 'demo'} onClick={() => chooseSource('demo')}><Sparkle size={17} />Demo</button>
+            <button aria-pressed={source === 'microphone'} onClick={() => chooseSource('microphone')}><Microphone size={17} />My mic</button>
+            <button aria-pressed={source === 'performance' || source === 'file'} onClick={() => chooseSource('performance')}><Headphones size={17} />Freestyles</button>
           </div>
-          <div className="studio-stage-caption">{source === 'demo' ? 'Scripted words · real phonetic rhyme matching' : 'Words arrive first. The rhyme follows.'}</div>
+          {source === 'demo' && <section className="studio-source-description"><h3>The midnight session</h3><p>An original beat and scripted verse to try the scrolling highlighter.</p><span className="studio-source-badge">Motion demo · {tempo} BPM</span></section>}
+          {source === 'microphone' && <section className="studio-source-description"><h3>Your freestyle</h3><p>Speak into your microphone. The waveform follows your voice; words and rhymes follow as they are recognized.</p><span className="studio-source-badge">Free · On device · English</span><br /><button className="studio-file-button" onClick={() => void openVoiceSample()}>Try voice sample</button>{!micAvailable && <p className="studio-browser-note">Use a current desktop browser for live listening.</p>}</section>}
+          {source === 'file' && <section className="studio-source-description"><h3>{fileName}</h3><p>Play and transcribe this clip on your device.</p><button className="studio-file-button" onClick={() => fileInput.current?.click()}>Choose another audio file</button></section>}
+          {source === 'performance' && <section className="studio-performance-library">
+            {PERFORMANCES.map(item => <button key={item.id} className={'studio-performance' + (item.id === performanceId ? ' is-selected' : '')} onClick={() => chooseSource('performance', item.id)}>
+              <span className="studio-performance-art" style={{ backgroundImage: `url(https://i.ytimg.com/vi/${item.id}/hqdefault.jpg)` }} /><span><strong>{item.artist}</strong><small>{item.title} · {item.year}</small></span>{item.id === performanceId ? <Check size={16} /> : <Play size={15} />}
+            </button>)}
+            <PerformancePlayer performance={currentPerformance} onControl={onPlayerControl} onPlaying={onPlayerPlaying} onExternalOpen={onExternalOpen} />
+            <p className="studio-tab-instruction">Close this panel, press play, and select the performance tab with <strong>Share tab audio</strong> enabled.</p>
+            <a href={currentPerformance.url} className="studio-official-link" target="_blank" rel="noreferrer" onClick={onExternalOpen}>Open official performance<ArrowUpRight size={14} /></a>
+          </section>}
+          {source !== 'file' && <button className="studio-file-button" onClick={() => fileInput.current?.click()}>Open audio file</button>}
+          <p className="studio-source-footnote"><span className={dictionaryReady ? 'studio-ready-dot' : 'studio-loading-dot'} />{dictionaryReady ? 'Rhyme engine ready' : 'Loading pronunciations'}</p>
         </div>
 
-        {error && <div className="studio-error" role="alert"><span>{error}</span><button aria-label="Dismiss message" onClick={() => setError('')}><X size={16} /></button></div>}
-
-        <div className="studio-transport">
-          <div className="studio-transport-primary">
-            <button className="studio-play-button" onClick={() => void start()} disabled={!dictionaryReady} aria-label={phase === 'starting' ? 'Cancel listening' : running ? 'Pause session' : source === 'demo' ? 'Play demo' : source === 'file' ? 'Play audio file' : 'Start listening'}>{running || phase === 'starting' ? <Pause weight="fill" size={20} /> : <Play weight="fill" size={20} />}</button>
-            <div><strong>{source === 'demo' ? 'The midnight session' : source === 'microphone' ? 'Your freestyle' : source === 'file' ? fileName : currentPerformance.artist + ' · ' + currentPerformance.title}</strong><small>{phase === 'starting' ? 'Preparing on-device recognition · press to cancel' : running ? source === 'demo' ? 'Original instrumental · scripted verse' : 'Listening locally · ' + (backend || 'loading') : phase === 'complete' ? 'Press play to start a fresh trail' : source === 'performance' ? 'Listen to tab audio' : source === 'microphone' ? 'Start listening to your microphone' : source === 'file' ? 'Play and transcribe this audio clip' : 'Press play and watch the rhymes unfold'}</small></div>
+        <div hidden={panel !== 'settings'}>
+          {source !== 'demo' && <div className="studio-voice-options"><label htmlFor="studio-quality">Voice engine</label><select id="studio-quality" value={quality} disabled={running || phase === 'starting'} onChange={event => setQuality(event.target.value as 'accurate' | 'fast')}><option value="accurate">Accuracy first</option><option value="fast">Speed first</option></select><p>Free, local processing. First use downloads a voice model. {backend && 'Running on ' + backend + '.'}</p>{inferenceMs > 0 && <small>Last recognition pass: {(inferenceMs / 1000).toFixed(1)}s</small>}</div>}
+          <div className="studio-tuning">
+            <div className="studio-tuning-heading"><label htmlFor="studio-tempo">Scroll tempo</label><button onClick={tapTempo} className="studio-tap">{tapCount > 0 && tapCount < 3 ? 'Tap ' + (3 - tapCount) + ' more' : 'Tap to match'}</button></div>
+            <div className="studio-tempo-row"><input id="studio-tempo" type="range" min="55" max="180" value={tempo} onChange={event => setTempo(Number(event.target.value))} /><span className="studio-tempo-value">{tempo}<small>BPM</small></span></div>
+            <div className="studio-tuning-heading"><label htmlFor="studio-delay">Highlighter delay</label><span>{(inkDelay / 1000).toFixed(1)}s</span></div>
+            <input id="studio-delay" type="range" min="200" max="1400" step="50" value={inkDelay} onChange={event => setInkDelay(Number(event.target.value))} />
+            <label className="studio-near-toggle"><input type="checkbox" checked={nearRhymes} onChange={event => setNearRhymes(event.target.checked)} /><span>Include possible rhymes</span></label>
           </div>
-          <div className="studio-beat-indicator" aria-label={'Tempo ' + tempo + ' beats per minute'}>{[0, 1, 2, 3].map(value => <span key={value} className={running && activeBeat === value ? 'is-current' : ''} />)}<small>{tempo} BPM</small></div>
-          <div className="studio-volume"><button aria-label={volume ? 'Mute' : 'Unmute'} onClick={() => setVolume(volume ? 0 : 0.45)}>{volume ? <SpeakerHigh size={19} /> : <SpeakerSlash size={19} />}</button><input type="range" aria-label="Playback volume" min="0" max="1" step="0.01" value={volume} onChange={event => setVolume(Number(event.target.value))} /></div>
+          <div className="studio-volume"><button className="studio-icon-button" aria-label={volume ? 'Mute' : 'Unmute'} onClick={() => setVolume(volume ? 0 : 0.45)}>{volume ? <SpeakerHigh size={20} /> : <SpeakerSlash size={20} />}</button><label htmlFor="studio-volume">Playback volume</label><input id="studio-volume" type="range" min="0" max="1" step="0.01" value={volume} onChange={event => setVolume(Number(event.target.value))} /></div>
+          <div className="studio-session-actions"><button disabled={!words.length} onClick={downloadTranscript}><DownloadSimple size={18} />Save transcript</button><button onClick={() => { reset(); panelRef.current?.close(); }}><ArrowCounterClockwise size={18} />New session</button></div>
         </div>
-        <div className="studio-session-footer"><span>{words.length} words <span>·</span> {analysis.families.length} rhyme families</span><div><button disabled={!words.length} onClick={downloadTranscript}><DownloadSimple size={14} />Save transcript</button><button onClick={reset}>New session</button></div></div>
-      </section>
 
-      <aside className="studio-rhyme-panel" aria-label="Rhyme relationships">
-        <div className="studio-rhyme-heading"><p className="studio-eyebrow">THE CONNECTIONS</p><span>{analysis.families.length.toString().padStart(2, '0')}</span></div>
-        <h2>Rhymes leave<br />a little color.</h2>
-        <p className="studio-rhyme-description">The same sound gets the same ink. Follow it through your verse.</p>
-        <div className="studio-family-list">
-          {families.length ? families.map(family => <button key={family.id} className={'studio-family' + (focusedFamily === family.id ? ' is-focused' : '')} style={{ '--rhyme-color': COLORS[family.color] } as CSSProperties} aria-pressed={focusedFamily === family.id} onClick={() => setFocusedFamily(focusedFamily === family.id ? null : family.id)}>
-            <span className="studio-family-swatch" />
-            <span><strong>{family.examples.join(' / ')}</strong><small>{family.kind === 'phrase' ? 'Across words' : family.kind === 'multisyllable' ? family.syllables + '-syllable rhyme' : family.kind === 'near' ? 'Possible rhyme' : 'Matching sound'}</small></span>
-          </button>) : <div className="studio-no-families"><Sparkle size={22} weight="light" /><p>Two sounds find each other.<br />A connection appears here.</p></div>}
+        <div hidden={panel !== 'rhymes'}>
+          <p className="studio-rhyme-description">Matching sounds share a color. Tap a family to follow it through your verse.</p>
+          {focusedFamily && <button className="studio-file-button" onClick={() => { setFocusedFamily(null); panelRef.current?.close(); }}>Show all words</button>}
+          <div className="studio-family-list">
+            {families.length ? families.map(family => <button key={family.id} className={'studio-family' + (focusedFamily === family.id ? ' is-focused' : '')} style={{ '--rhyme-color': COLORS[family.color] } as CSSProperties} aria-pressed={focusedFamily === family.id} onClick={() => { setFocusedFamily(focusedFamily === family.id ? null : family.id); panelRef.current?.close(); }}>
+              <span className="studio-family-swatch" /><span><strong>{family.examples.join(' / ')}</strong><small>{family.kind === 'phrase' ? 'Across words' : family.kind === 'multisyllable' ? family.syllables + '-syllable rhyme' : family.kind === 'near' ? 'Possible rhyme' : 'Matching sound'}</small></span>
+            </button>) : <p className="studio-no-families">Your rhyme connections will appear here.</p>}
+          </div>
+          <div className="studio-ink-key"><span className="studio-key-solid" />Rhyme<span className="studio-key-dashed" />Possible rhyme</div>
         </div>
-        <div className="studio-ink-key"><span className="studio-key-solid" />Rhyme<span className="studio-key-dashed" />Possible rhyme</div>
-        <p className="studio-rhyme-footnote">A map of sounds, still unfolding.<br />Every delivery is a little different.</p>
-        {source === 'performance' && <a href={currentPerformance.url} className="studio-official-link" target="_blank" rel="noreferrer" onClick={onExternalOpen}>Open official performance<ArrowUpRight size={14} /></a>}
-      </aside>
-    </div>
+      </div>
+    </dialog>
   </main>;
 }

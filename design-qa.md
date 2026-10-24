@@ -1,10 +1,10 @@
-# Current LLMC · local voice studio verification
+# Current LLMC · transcript-first studio verification
 
 final result: passed
 
 ## Findings
 
-No actionable P0/P1/P2 visual findings remain in the checked states. Recognition is a tested local prototype, with the real-audio limitations below; this is not a claim of perfect freestyle transcription.
+No actionable P0/P1/P2 visual findings remain in the checked states, including the latest request for more text space, a small play button, and the original game colors. Recognition is a tested local prototype, with the real-audio limitations below; this is not a claim of perfect freestyle transcription.
 
 ## Source and implementation
 
@@ -13,10 +13,24 @@ No actionable P0/P1/P2 visual findings remain in the checked states. Recognition
 - Preview: `http://127.0.0.1:3012/`, studio `/studio`.
 - Current-home visual truth: `/var/folders/w5/fd0gsd1x0mb573n1pkyvvjj40000gn/T/codex-clipboard-9f4c8b81-4945-4559-b057-ac8d2ddd3b6c.png`, 3454 × 1750 pixels.
 - Rhyme-marking visual truth: `/var/folders/w5/fd0gsd1x0mb573n1pkyvvjj40000gn/T/codex-clipboard-2df079d0-a5bc-4f1e-96e7-66802f1d374a.png`, 3404 × 1460 pixels.
+- Latest layout reference: `/var/folders/w5/fd0gsd1x0mb573n1pkyvvjj40000gn/T/codex-clipboard-ae1ad66f-6107-490d-ac4a-1befff3cedfa.png`, 2528 × 1844 pixels. The user identifies its panels/player as crowding the verse.
+- Latest priority crop: `/var/folders/w5/fd0gsd1x0mb573n1pkyvvjj40000gn/T/codex-clipboard-b69b9388-8cf6-4067-bbd6-cbbe59f2fe72.png`, 2040 × 838 pixels. Text and animated markers are the primary experience; other controls must be simplified.
 - Additional user direction: words arrive before an actual highlighter sweep, a central processing/audio indicator, gentle scrolling and fading, steady text during speech revisions, local/free recognition.
 - Evidence directory: `/Users/pierreramzy/Documents/ChatGPT/Linkedin Automation/llmc-live-rhymes-20261024/evidence/`.
 
-## Captures and normalization
+## Latest UI revision and evidence
+
+- The player card, permanent sidebars, marketing headings and secondary navigation are removed. A 34-pixel play button, audio-source selector, rhyme count and settings button share a slim header.
+- Source selection, tempo, highlight delay, volume, voice quality, save/reset and rhyme families remain accessible in a native modal drawer. Escape and the close button dismiss it and restore focus. Selecting a family closes the drawer to reveal the focused verse; Show all words restores the full verse.
+- The real input waveform and a short processing status sit in a small footer. They reserve no large blank area between transcript lines. The existing word-arrival and delayed marker-sweep animations are preserved.
+- Transcript canvas measured 1555.2 × 682 CSS pixels in a 1728 × 836 desktop viewport, and 346 × 696 in a 390 × 844 phone viewport. Phone document size was exactly 390 × 844, with no page overflow. Wrapped rows retain a 20-pixel gap. History fades more gradually and the active line sits lower, exposing more previous lines.
+- Original brand values are restored: background `#25292D`, near-black controls, white type, turquoise `#5CE2C7`, and purple supporting icons. The audio waveform and primary rhyme color use the same turquoise. Distinct rhyme families keep distinct marker colors.
+- Current captures: `studio-focused-desktop-final.png` (1728 × 836, completed demo on the usual 3012 preview), `studio-focused-desktop.png` (same dimensions, earlier paused state), `studio-focused-mobile.png` (390 × 844), `studio-focused-rhymes.png`, and `studio-focused-local-voice.png` (688 × 728).
+- Full and focused comparison inputs actually generated and opened together: `qa-focused-studio-full.png`, `qa-focused-studio-words.png`, `qa-focused-studio-palette.png`. These pair the supplied references and original home with the revised studio in equal-width slots, proportionally resized without stretching. The full before image intentionally includes the user's crop edges and dock; it is a layout comparison, not a pixel overlay. Viewport/density metadata for the supplied crops is unavailable.
+- Checked desktop and phone verse wrapping, play/pause, drawer opening/closing, Escape, near-rhyme toggle, family focus/reset, source switching, and loading/completed local-audio states. The original spoken sample again produced 40 recognized words and four rhyme families in the revised UI. Chrome and in-app console checks were empty.
+- Production build and the 21 studio checks pass. Main and origin/main remain at the recorded base; the changes stay on `feat/live-rhyme-studio`. No push or deployment.
+
+## Earlier captures and normalization
 
 - `current-home.png`: current Daily/Endless home plus the new studio link; 1728 × 812 captured pixels.
 - `local-rhymes-desktop-final.png`: 1728 × 840 captured pixels; desktop browser reported 1728 × 836 CSS viewport. The four-pixel capture-height difference is recorded rather than treated as a design mismatch.
@@ -30,15 +44,15 @@ No actionable P0/P1/P2 visual findings remain in the checked states. Recognition
 
 ## State and acceptable differences
 
-The new checkout contains the actual Daily/Endless UI, existing Termina/Neulis typography, brand assets and header links. The new studio is a separate requested interaction, rather than a reproduction of the YouTube page. Its dark LLMC surface, pastels, central input waveform, controls and fading trail are intentional adaptations.
+The new checkout contains the actual Daily/Endless UI, existing Termina/Neulis typography, brand assets and header links. The new studio is a separate requested interaction, rather than a reproduction of the YouTube page. Its transcript canvas, colored markers, real input waveform and fading trail are intentional adaptations. The latest user direction explicitly replaces the earlier green surface and three-column layout with the original charcoal palette and a text-first composition.
 
 Daily is disabled as **Unavailable** locally because `DATABASE_URL` is absent. The supplied production screenshot shows **PLAY DAILY**. This is the existing application's configuration-dependent state; no Daily data or successful challenge state is fabricated. The studio needs no database.
 
 ## Required fidelity surfaces
 
 - **Typography:** existing Termina heading and Neulis body fonts are preserved on the current home. Studio words are large, legible, and retain their DOM identities through edits. Supporting labels remain subordinate. Reference and implementation focused crops show the same basic marker-behind-text treatment.
-- **Spacing/layout:** home mode order is preserved and the studio link sits below it. Studio uses source/transcript/relationship columns on desktop and a stacked flow on phone. Transcript rows use natural measured heights with a 28-pixel gap, rather than a fixed pitch. Desktop measured row heights included 115.5 and 57.75 pixels; phone wrapped rows measured about 75.9 pixels. Neighboring rows retain the gap and do not overlap. Phone document width stayed within the viewport.
-- **Colors/tokens:** the existing home palette remains intact. Studio uses the LLMC dark/mint direction with stable per-session rhyme colors. Solid exact matches, dashed possible matches, neutral uncertain words, and deliberately fading history are visually distinct. The source's literal palette is not being cloned.
+- **Spacing/layout:** home mode order is preserved and the studio link sits below it. Studio now uses the full viewport for the transcript on desktop and phone, with sources/settings/relationships in a drawer. Rows use natural measured heights and a 20-pixel gap; long words can wrap without creating horizontal overflow. Latest phone rows measured 42.7, 85.3 and 128 pixels, depending on wrapping. Neighboring rows retain the gap and do not overlap. Phone document dimensions stayed within the viewport.
+- **Colors/tokens:** the existing home palette remains intact. Studio uses the original LLMC charcoal, white, turquoise and purple palette with stable per-session rhyme colors. Solid exact matches, dashed possible matches, neutral uncertain words, and deliberately fading history are visually distinct. The original game background and primary-action hex values match the studio.
 - **Image/assets:** current product logos/icons are reused. New studio icons use Phosphor. Official performance thumbnails and external links are retained; unavailable embedded playback has a thumbnail/link fallback. No artist recording or lyrics are bundled. The bundled voice check is an original synthesized spoken verse.
 - **Copy/content:** source choice, local processing, one-time model download, accuracy/speed choice, processing, quiet input, detected audio, cancellation and completed state describe actual behavior. The scripted motion demo is labeled separately from recognized speech.
 
@@ -49,7 +63,8 @@ Daily is disabled as **Unavailable** locally because `DATABASE_URL` is absent. T
 3. **P2 · revision flicker.** Text edits formerly regenerated a suffix of word keys and moved row keys. Edit alignment, stable segment/row identities, memoized word rendering and a committed prefix now preserve established text. Regression tests include insertions, punctuation edits, corrections and a shorter final hypothesis.
 4. **P2 · erased spoken phrase.** The first distilled recognizer could omit a repeated phrase on finalization, and a short hard audio boundary could misread a word. Accuracy mode now uses full Whisper Small with a full-precision GPU encoder, up to twelve seconds of context, and stable confirmed prefixes. The natural-speech retest produced all 22 expected words in order, apart from punctuation.
 5. **P2 · input feedback was decorative.** A real analyser now drives a canvas waveform independently of recognition. Quiet/detected/off states were observed during actual audio playback. Display gain adapts to make low-amplitude input visible without inventing movement.
-6. **P2 · wrapped-line spacing.** The fixed 104-pixel pitch was replaced with natural line heights and measured scrolling. New desktop/phone captures and DOM measurements confirm 28-pixel gaps after wrapped rows.
+6. **P2 · wrapped-line spacing.** The fixed 104-pixel pitch was replaced with natural line heights and measured scrolling. The earlier 28-pixel gaps were tightened to 20 pixels in the latest revision, retaining separation after wrapped rows.
+7. **P1 · cramped transcript and incorrect theme.** Removed the large player, permanent sidebars and promotional copy, expanded the transcript canvas, moved controls to drawers, reduced the play control, softened the history fade, and restored the exact original charcoal/turquoise values. New full/focused/palette comparisons and desktop/phone captures verify the requested result.
 
 Final full/focused visual comparisons found no additional P0/P1/P2 changes to apply.
 
@@ -62,7 +77,7 @@ Final full/focused visual comparisons found no additional P0/P1/P2 changes to ap
 - Recognition passes in these checks were approximately 0.8–1.4 seconds. These are per-pass processing times, not total caption latency. Input buffering, inference, visual pacing and highlight delay add latency.
 - Waveform **Audio detected** was observed while real audio was active, then **Audio off** after completion. Recognition and visible rhyme families continued through real hypotheses; the source text was not inserted into the transcript by the test.
 - Chrome and in-app studio consoles were checked after recognition and had no warnings/errors.
-- New studio home link, source changes, sample playback, cancellation, pause/reset, typography, desktop composition and phone wrapping were checked. Existing source/family/tempo/highlighter interactions from the first studio iteration remain in place.
+- New studio home link, source changes, sample playback, cancellation, pause/reset, typography, desktop composition and phone wrapping were checked. Source/family/tempo/highlighter interactions remain available through the compact controls and drawers.
 - The existing Datamuse-backed suite produced 144 passes and four failures (saw/raw, law/raw, jaw/raw, saline/daily) when network access was available. The evaluator and those tests are unchanged from this repository's main. These are not counted as passing studio checks.
 
 ## Residual gaps and limitations

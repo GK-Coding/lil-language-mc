@@ -28,7 +28,7 @@ export default memo(function AudioWaveform({ analyser, active }: { analyser: Ana
         for (let sample = start; sample < end; sample++) local = Math.max(local, Math.abs(values[sample]));
         smoothed[index] += (Math.min(1, local * displayGain) - smoothed[index]) * 0.6;
         const height = Math.max(2, smoothed[index] * 68);
-        context.fillStyle = peak > .98 ? '#edc386' : rms > .006 ? '#b6edb8' : '#53675b';
+        context.fillStyle = peak > .98 ? '#edc386' : rms > .006 ? '#5ce2c7' : '#777e84';
         context.fillRect(index * 8 + 1, (76 - height) / 2, 4, height);
       }
       if (now - previousLabel > 300) {
