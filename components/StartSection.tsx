@@ -1,6 +1,8 @@
 "use client";
 
 import Image from 'next/image'
+import Link from 'next/link'
+import { Waveform } from '@phosphor-icons/react'
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -100,6 +102,9 @@ export default function StartSection() {
                     <div className="text-[18px] md:text-[30px] px-[66px] pb-[13px] pt-[17px] bg-gradient-to-r from-teal-300 to-teal-300 rounded-[12px] md:rounded-[25px] flex-col justify-center items-center gap-2.5 flex">
                         <button className="text-zinc-900 font-bold tracking-wider" onClick={() => setCountdownActive(true)}>Reveal Word</button>
                     </div>
+                    <Link href="/studio" className="flex items-center gap-3 rounded-xl border border-current/20 px-6 py-3 text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5">
+                        <Waveform size={19} />Live rhyme studio<span className="text-[10px] text-emerald-600 dark:text-[#5DE3C8]">NEW</span>
+                    </Link>
                 </div>
             </div>
             <footer className="absolute bottom-0 w-full max-w-[1920px] mx-auto text-center pb-[20px] opacity-50">
