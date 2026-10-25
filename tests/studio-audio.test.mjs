@@ -147,6 +147,34 @@ test('local capture monitors the selected input and closes every resource', asyn
       captures[0].port.onmessage({data:new Float32Array(22000).fill(.1)});
       assert.equal(text.messages.at(-1).type,'transcribe');live.close();
     });
+    await t.test('Moonshine receives each PCM sample once and finishes only after queued audio is consumed', async () => {
+      const mic=track('audio');setup({getUserMedia:async()=>stream([mic])});let ended=0;
+      const live=new LiveSpeech({...callbacks,ended:()=>ended++});
+      await live.start('microphone','accurate',undefined,'moonshine');
+      const worker=workers[0];assert.equal(worker.url,'/studio/moonshine-worker.js');
+      captures[0].port.onmessage({data:new Float32Array(2048).fill(.1)});
+      captures[0].port.onmessage({data:new Float32Array(4096).fill(.2)});
+      captures[0].port.onmessage({data:new Float32Array(1024).fill(.3)});
+      assert.equal(worker.messages.filter(message=>message.type==='audio').length,1);
+      worker.onmessage({data:{type:'consumed'}});
+      const combined=worker.messages.at(-1).audio;
+      assert.equal(combined.length,5120);assert.ok(Math.abs(combined[0]-.2)<.0001);assert.ok(Math.abs(combined[4096]-.3)<.0001);
+      captures[0].port.onmessage({data:{type:'flushed'}});
+      assert.notEqual(worker.messages.at(-1).type,'finish');
+      worker.onmessage({data:{type:'consumed'}});assert.equal(worker.messages.at(-1).type,'finish');
+      worker.onmessage({data:{type:'transcript',id:'18446744073709551614',text:'light night',final:true}});
+      assert.ok(transcripts.at(-1)[0].endsWith('18446744073709551614'));
+      worker.onmessage({data:{type:'finished'}});
+      assert.equal(ended,1);assert.ok(worker.terminated);assert.equal(mic.stops,1);
+    });
+    await t.test('a stalled streaming decoder has a bounded backlog and releases capture', async () => {
+      const mic=track('audio');setup({getUserMedia:async()=>stream([mic])});const failures=[];
+      const live=new LiveSpeech({...callbacks,error:message=>failures.push(message)});
+      await live.start('microphone','accurate',undefined,'moonshine');
+      captures[0].port.onmessage({data:new Float32Array(2048).fill(.1)});
+      captures[0].port.onmessage({data:new Float32Array(65000).fill(.1)});
+      assert.match(failures[0],/cannot keep up/);assert.ok(workers[0].terminated);assert.equal(mic.stops,1);
+    });
     await t.test('tab mode never silently requests the microphone', async () => {
       const audio = track('audio'); const video = track('video'); let micRequests = 0;
       const input = stream([audio, video]);

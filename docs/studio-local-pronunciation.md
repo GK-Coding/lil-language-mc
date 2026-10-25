@@ -1,6 +1,19 @@
 # Local pronunciation matching
 
-The live studio uses two independent browser workers. Whisper supplies words; Wav2Vec2 supplies an unconstrained CTC phoneme sequence from the same 16 kHz PCM. Audio is never sent to either model host or an inference API. Model files are downloaded once and cached by Transformers.js; the sound vocabulary is separately cached in Cache Storage. Both models are free to run.
+The live studio uses two independent browser workers. Moonshine supplies streaming words by default; Whisper remains selectable for comparison. Wav2Vec2 supplies an unconstrained CTC phoneme sequence from the same 16 kHz PCM. Audio is never sent to either model host or an inference API. Model files are downloaded on first use and cached locally. All inference is free to run.
+
+## Streaming voice choices
+
+- `Moonshine · Live accuracy`: English Medium Streaming through the official, MIT-licensed `@moonshine-ai/moonshine-wasm` package, pinned to `0.1.5`.
+- `Moonshine · Live speed` (default): English Small Streaming through the same runtime. This gave earlier stable captions than Medium in the checked local sample; it is not a universal speed or accuracy benchmark.
+- `Whisper · Accuracy` and `Whisper · Speed`: retain the existing local Small English and Base English models, with WebGPU where available and WASM fallback.
+- Sources: https://moonshine-voice.readthedocs.io/en/latest/using/transcription/ and https://www.npmjs.com/package/@moonshine-ai/moonshine-wasm
+
+Moonshine uses the studio's existing selected-input capture, rather than opening another microphone. Non-overlapping 16 kHz PCM enters one streaming recognizer, with a 250 ms update interval. A bounded 40-second audio history extracts each caption's actual sound by its model timestamps for the independent phoneme worker. Pending input coalesces while inference runs; a four-second backlog surfaces a device-speed error and releases capture instead of silently accumulating delay. File completion flushes the stream and drains sound jobs. Pause/source change cancels both workers.
+
+The threaded WASM runtime needs cross-origin isolation. Only `/studio` and its assets receive COOP `same-origin` and COEP `credentialless`; other game routes are unaffected. The official performance embed is credentialless-compatible and retains its external-link fallback. Browsers that cannot initialize this runtime show an error with a Whisper alternative. Medium/Small need their own first-use model download; the roughly 318 MB sound model is additional. Model weights are not committed.
+
+Confirmed captions are append-only. Repeated hypotheses must agree before publishing a prefix, and a later substitution retains the already displayed spelling without appending a duplicate correction. This deliberately trades late spelling corrections for a stable performance view. The 250 ms decode interval is not a promise of 250 ms caption latency: model computation, evidence for confirmation, device/browser load and visual formation also contribute.
 
 ## Sound model and provenance
 

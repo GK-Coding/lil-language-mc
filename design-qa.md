@@ -1,4 +1,4 @@
-# Current LLMC · observed pronunciation and word ripple verification
+# Current LLMC · local streaming voice trial
 
 final result: passed
 
@@ -6,7 +6,28 @@ final result: passed
 
 No actionable P0/P1/P2 visual findings remain in the checked states, including the latest request for more text space, a small play button, and the original game colors. Recognition is a tested local prototype, with the real-audio limitations below; this is not a claim of perfect freestyle transcription.
 
-## Current revision: pronunciation from audio and continuous word formation
+## Current revision: Moonshine streaming trial
+
+- Added the official MIT-licensed `@moonshine-ai/moonshine-wasm` runtime pinned to `0.1.5`, with English Small and Medium Streaming. Whisper Small/Base remain selectable. No key or paid inference service is used. Weights download on first use and are cached locally.
+- The default is **Moonshine · Live speed (Small)**. This choice follows the actual local sample result below, rather than a claim that one model is universally best. Medium is available as **Live accuracy**. The settings menu and existing compact charcoal/turquoise interface remain intact.
+- Streaming uses the existing selected-input capture, real analyser and particle field. PCM is sent once, pending frames coalesce, and a four-second backlog fails visibly instead of growing without bound. A bounded timestamped audio history supplies the same utterance to the independent pronunciation worker. Finish drains pending jobs; pause/source changes terminate both workers. Model line IDs remain strings without losing 64-bit precision.
+- Only studio responses receive the isolation headers required for threaded WASM. Entry from the home button and return to the writing game use full document navigation so those headers take effect correctly. The official video iframe is credentialless-compatible. Its unavailable-playback thumbnail/link fallback was observed; successful embedded playback is not claimed.
+- Fixed a streaming revision that could append a substitute next to an already confirmed word (for example, `and then`). Published spelling and identities remain stable; the correction is not appended twice. The Medium early/final comparison retained all 27 observed early words with unchanged IDs and text.
+- Actual browser workers transcribed the original 8.2075-second sample. All three choices below produced 40 words and four detected families. These are separate runs with different warming/load, not a controlled accuracy or latency benchmark. Times measure publication of stable text, before the 720 ms visual formation completes.
+
+| Model | First stable words | Last words published |
+| --- | --- | --- |
+| Moonshine Medium, in-app browser | 2.842 s | 10.250 s |
+| Moonshine Small, in-app browser | 1.307 s | 8.650 s |
+| Whisper Small, GPU, in-app browser | 2.791 s | 9.779 s |
+| Moonshine Small, Chrome | 1.142 s | 9.075 s |
+
+- Recognition differs: Medium heard `then ride` where the original says `and write`; Small heard `then right`; Whisper heard `and right`. All are transcription errors or homophones. Four detected families does not mean every intended rhyme was correctly grouped: acoustic recognition/alignment can omit a dictionary relationship or add a questionable one. The pronunciation matcher remains experimental, especially for slang, fast rap, bent vowels and music bleed. No new human microphone or freestyle accuracy benchmark is claimed.
+- New regression coverage checks non-overlapping PCM, pending-frame coalescing, finish acknowledgement, source cleanup/backpressure, 64-bit IDs, timestamped sound extraction/expiry, and confirmed-word substitution. **48 studio checks pass**, as do production build, type/lint and whitespace checks. Browser console checks were empty. Node's existing module-type warnings and build browser-data freshness notices remain unrelated to this change.
+- Evidence: `moonshine-comparison.json`, `moonshine-chrome-final.json`, `moonshine-settings-final.png`, `moonshine-desktop-final.png`, and `moonshine-live-feedback.png`. The comparison uses real decoded audio and workers, without inserting expected text. A final replay through the home entry showed Audio detected at approximately 00:01, measured particle audio level `0.975`, four forming glyphs, and the first two stable words at 1.121 s. The normal home-to-studio path successfully initialized Moonshine. HTTP checks confirmed isolation headers on the studio/worker and none on the home page. Existing waveform/ripple/highlighting and scrollback remain connected to the selected input.
+- Delivery remains on `feat/live-rhyme-studio` at `http://127.0.0.1:3012/studio`; main is unchanged, with no push or deployment.
+
+## Previous revision: pronunciation from audio and continuous word formation
 
 This section supersedes the earlier dictionary-only limitation and particle handoff below.
 

@@ -53,13 +53,19 @@ export default function PerformancePlayer({ performance, onControl, onPlaying, o
     }, 8000);
     const host = root.current;
     if (!host) return;
-    const target = document.createElement('div');
+    // Keep the official embed compatible with the studio's threaded audio runtime.
+    const target = document.createElement('iframe');
+    target.setAttribute('credentialless', '');
+    target.title = performance.artist + ' official freestyle performance';
+    target.width = '100%'; target.height = '200';
+    target.allow = 'autoplay; encrypted-media; picture-in-picture';
+    target.allowFullscreen = true;
+    const params = new URLSearchParams({ enablejsapi: '1', playsinline: '1', rel: '0', origin: window.location.origin });
+    target.src = 'https://www.youtube.com/embed/' + performance.id + '?' + params;
     host.replaceChildren(target);
     loadPlayerAPI().then(() => {
       if (cancelled || !(window as PlayerWindow).YT) return;
       player = new (window as PlayerWindow).YT!.Player(target, {
-        videoId: performance.id, width: '100%', height: 200,
-        playerVars: { playsinline: 1, rel: 0, origin: window.location.origin },
         events: {
           onReady: () => {
             if (!player || cancelled) return;
@@ -80,7 +86,7 @@ export default function PerformancePlayer({ performance, onControl, onPlaying, o
       });
     }).catch(() => { clearTimeout(timeout); if (!cancelled) setError('The video player could not load. Open the official video in another tab to listen.'); });
     return () => { cancelled = true; clearTimeout(timeout); callbacks.current.onControl(null); callbacks.current.onPlaying(false); player?.destroy(); };
-  }, [performance.id]);
+  }, [performance.id, performance.artist]);
 
   return <div className="studio-video-wrap">
     <div ref={root} className="studio-video" style={{ display: ready && !error ? 'block' : 'none' }} />

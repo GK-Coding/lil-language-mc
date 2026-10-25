@@ -76,3 +76,11 @@ test('shared articles do not acquire highlights from light/night', () => {
   assert.equal(result.marks['7'], undefined);
   assert.equal(result.marks['3'].familyId, result.marks['8'].familyId);
 });
+
+test('a substituted confirmed word is not duplicated in a later streaming hypothesis',()=>{
+  const trail=new TranscriptTrail(),stable=new StableTranscript();
+  for(const text of ['I find the light and write into it','I find the light and write into the night'])stable.update(trail.update('live',text,false,1),1);
+  const result=stable.update(trail.update('live','I find the light then ride into the night',true,2),2);
+  assert.equal(result.words.length,9);
+  assert.equal(result.words.map(word=>word.text).join(' '),'I find the light and write into the night');
+});

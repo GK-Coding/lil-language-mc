@@ -45,7 +45,9 @@ export class TranscriptTrail {
       const anchors = align(segment.words, parts);
       let lastAnchor = -1;
       for (const [index, previous] of anchors) {
-        if (segment.words.indexOf(previous) < committed && normalized(previous.text) === normalized(parts[index])) lastAnchor = Math.max(lastAnchor, index);
+        // A substituted word still occupies the confirmed word's position.
+        // Preserve the published spelling without appending the correction twice.
+        if (segment.words.indexOf(previous) < committed) lastAnchor = Math.max(lastAnchor, index);
       }
       if (lastAnchor >= 0) parts = [...segment.words.slice(0, committed).map(word => word.text), ...parts.slice(lastAnchor + 1)];
     }

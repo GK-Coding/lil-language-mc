@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowCounterClockwise, ArrowDown, ArrowLeft, ArrowUpRight, CaretDown, Check, CircleNotch, DownloadSimple, FadersHorizontal, Headphones, Microphone, Pause, Play, Sparkle, SpeakerHigh, SpeakerSlash, X } from '@phosphor-icons/react';
 import { Lexicon, RhymeAnalysis, RhymeMark, RhymeSession, StudioWord } from '@/lib/studio/rhyme-engine';
@@ -35,7 +34,7 @@ const LyricWord = memo(function LyricWord({ word, mark, dimmed }: { word: Studio
   return <span className={'studio-word' + (!word.settled ? ' is-provisional' : '') + (mark ? ' is-linked' : '') + (mark?.near ? ' is-near' : '') + (dimmed ? ' is-dimmed' : '')}
     style={{ '--rhyme-color': mark ? COLORS[mark.color] : 'transparent', '--formation-delay': (word.formationDelay || 0) + 'ms', '--highlight-delay': (word.formationDelay || 0) + 'ms' } as CSSProperties}
     onAnimationEnd={event => { if (event.animationName === 'studio-word-arrive') event.currentTarget.style.setProperty('--highlight-delay', '0ms'); }}
-    data-word-id={word.id} data-word-phase={word.settled ? 'ink' : 'dust'} data-rhyme-family={mark?.familyId} data-pronunciation={word.spoken?.source} aria-hidden={!word.settled || undefined}>
+    data-word-id={word.id} data-word-phase={word.settled ? 'ink' : 'dust'} data-published-at={word.settled ? word.at.toFixed(3) : undefined} data-rhyme-family={mark?.familyId} data-pronunciation={word.spoken?.source} aria-hidden={!word.settled || undefined}>
     {mark && <span className="studio-marker" aria-hidden="true" />}
     <span className="studio-word-text">{word.text}</span>
   </span>;
@@ -63,7 +62,7 @@ export default function LiveStudio() {
   const [focusedFamily, setFocusedFamily] = useState<string | null>(null);
   const [micAvailable, setMicAvailable] = useState(true);
   const [tapCount, setTapCount] = useState(0);
-  const [quality, setQuality] = useState<'accurate' | 'fast'>('accurate');
+  const [quality, setQuality] = useState<'moonshine-medium' | 'moonshine-small' | 'accurate' | 'fast'>('moonshine-small');
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [downloadMb, setDownloadMb] = useState(0);
   const [backend, setBackend] = useState('');
@@ -246,7 +245,7 @@ export default function LiveStudio() {
     speech.current = liveSpeech;
     setPhase('starting');
     try {
-      const started = await liveSpeech.start(liveSource === 'microphone' ? 'microphone' : liveSource === 'file' ? 'file' : 'tab', quality, audioFile.current);
+      const started = await liveSpeech.start(liveSource === 'microphone' ? 'microphone' : liveSource === 'file' ? 'file' : 'tab', quality === 'fast' || quality === 'moonshine-small' ? 'fast' : 'accurate', audioFile.current, quality.startsWith('moonshine') ? 'moonshine' : 'whisper');
       if (!started || !mounted.current || generation !== sourceGeneration.current) return;
       setActive(true);
       if (liveSource === 'performance' && !externalPerformance.current) player.current?.play();
@@ -341,7 +340,7 @@ export default function LiveStudio() {
   const onExternalOpen = useCallback(() => { externalPerformance.current = true; previousSourceTime.current = null; }, []);
   const countIn = source === 'demo' && running && beatPosition < 4;
   const processing = running && (source === 'demo' || phase === 'processing' || performance.now() - lastResult.current < 900);
-  const statusText = !dictionaryReady ? 'Preparing rhyme engine' : phase === 'starting' ? 'Preparing local voice engine' + (downloadMb ? ' · ' + downloadMb + ' MB' : '') : countIn ? 'Count in…' : running ? phase === 'processing' && source !== 'demo' ? 'Transcribing on device' : processing ? 'Finding rhymes' : 'Listening' : phase === 'complete' ? 'Session complete' : words.length ? 'Paused' : 'Ready when you are';
+  const statusText = !dictionaryReady ? 'Preparing rhyme engine' : phase === 'starting' ? (quality.startsWith('moonshine') ? 'Preparing Moonshine streaming' : 'Preparing Whisper') + (downloadMb ? ' · ' + downloadMb + ' MB' : '') : countIn ? 'Count in…' : running ? phase === 'processing' && source !== 'demo' ? 'Transcribing on device' : processing ? 'Finding rhymes' : 'Listening' : phase === 'complete' ? 'Session complete' : words.length ? 'Paused' : 'Ready when you are';
   const sourceLabel = source === 'demo' ? 'Demo' : source === 'microphone' ? 'My mic' : source === 'file' ? 'Audio file' : 'Freestyles';
   const openPanel = (next: typeof panel) => {
     setPanel(next);
@@ -375,7 +374,9 @@ export default function LiveStudio() {
       event.target.value = '';
     }} />
     <header className="studio-header">
-      <Link href="/" className="studio-brand" aria-label="Back to LLMC writing game"><ArrowLeft size={15} /><strong>LLMC</strong><span>LIVE</span></Link>
+      {/* Full navigation leaves the studio's isolated audio environment. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      <a href="/" className="studio-brand" aria-label="Back to LLMC writing game"><ArrowLeft size={15} /><strong>LLMC</strong><span>LIVE</span></a>
       <div className="studio-controls">
         <button className="studio-source-switch" onClick={() => openPanel('source')} aria-haspopup="dialog" aria-expanded={panelOpen && panel === 'source'} aria-label={'Audio source: ' + sourceLabel}>
           {source === 'microphone' ? <Microphone size={16} /> : source === 'demo' ? <Sparkle size={16} /> : <Headphones size={16} />}<span>{sourceLabel}</span><CaretDown size={12} />
@@ -435,7 +436,7 @@ export default function LiveStudio() {
         </div>
 
         <div hidden={panel !== 'settings'}>
-          {source !== 'demo' && <div className="studio-voice-options"><label htmlFor="studio-quality">Voice engine</label><select id="studio-quality" value={quality} disabled={running || phase === 'starting'} onChange={event => setQuality(event.target.value as 'accurate' | 'fast')}><option value="accurate">Accuracy first</option><option value="fast">Speed first</option></select><p>Free, local processing. First use downloads voice and sound models. Audio stays on your device. {backend && 'Running on ' + backend + '.'}</p>{inferenceMs > 0 && <small>Last recognition pass: {(inferenceMs / 1000).toFixed(1)}s</small>}<p role="status">{soundState === 'loading' ? 'Preparing pronunciation matching' + (soundMb ? ' · ' + soundMb + ' MB' : '') : soundState === 'ready' ? 'Matching your actual delivery · ' + words.filter(word=>word.spoken).length + ' words heard' : soundState === 'unavailable' ? 'Sound model unavailable. Using dictionary pronunciations for this session; restart to try again.' : 'Pronunciation matching starts with your audio.'}</p></div>}
+          {source !== 'demo' && <div className="studio-voice-options"><label htmlFor="studio-quality">Voice engine</label><select id="studio-quality" value={quality} disabled={running || phase === 'starting'} onChange={event => setQuality(event.target.value as typeof quality)}><option value="moonshine-medium">Moonshine · Live accuracy</option><option value="moonshine-small">Moonshine · Live speed</option><option value="accurate">Whisper · Accuracy</option><option value="fast">Whisper · Speed</option></select><p>Free, local processing. First use downloads voice and sound models. Audio stays on your device. {backend && 'Running on ' + backend + '.'}</p>{inferenceMs > 0 && <small>Last recognition pass: {(inferenceMs / 1000).toFixed(1)}s</small>}<p role="status">{soundState === 'loading' ? 'Preparing pronunciation matching' + (soundMb ? ' · ' + soundMb + ' MB' : '') : soundState === 'ready' ? 'Matching your actual delivery · ' + words.filter(word=>word.spoken).length + ' words heard' : soundState === 'unavailable' ? 'Sound model unavailable. Using dictionary pronunciations for this session; restart to try again.' : 'Pronunciation matching starts with your audio.'}</p></div>}
           <div className="studio-tuning">
             <div className="studio-tuning-heading"><label htmlFor="studio-tempo">Scroll tempo</label><button onClick={tapTempo} className="studio-tap">{tapCount > 0 && tapCount < 3 ? 'Tap ' + (3 - tapCount) + ' more' : 'Tap to match'}</button></div>
             <div className="studio-tempo-row"><input id="studio-tempo" type="range" min="55" max="180" value={tempo} onChange={event => setTempo(Number(event.target.value))} /><span className="studio-tempo-value">{tempo}<small>BPM</small></span></div>

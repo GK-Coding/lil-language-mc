@@ -13,6 +13,7 @@ export type SpeechCallbacks = {
   error: (message: string) => void;
   ended: () => void;
 };
+export type VoiceEngine = 'whisper' | 'moonshine';
 
 export function speechCapabilities() {
   return {
@@ -28,7 +29,7 @@ export class LiveSpeech {
   private soundWorker: Worker | null = null;
   private soundReady = false;
   private soundBusy = false;
-  private soundQueue: { id: number; audio: Float32Array; final: boolean; text: string }[] = [];
+  private soundQueue: { id: number | string; audio: Float32Array; final: boolean; text: string }[] = [];
   private soundTimeout: ReturnType<typeof setTimeout> | null = null;
   private stream: MediaStream | null = null;
   private context: AudioContext | null = null;
@@ -41,6 +42,12 @@ export class LiveSpeech {
   private stopped = true;
   private busy = false;
   private finishing = false;
+  private streaming = false;
+  private streamBusy = false;
+  private streamFinished = false;
+  private finishSent = false;
+  private frames: Float32Array[] = [];
+  private frameSamples = 0;
   private windows = new SpeechWindows();
   private queue = new SpeechQueue();
   private id = ++nextSpeechInstance;
@@ -48,8 +55,9 @@ export class LiveSpeech {
 
   constructor(callbacks: SpeechCallbacks) { this.callbacks = callbacks; }
 
-  async start(input: 'microphone' | 'tab' | 'file', quality: 'accurate' | 'fast' = 'accurate', file?: File): Promise<boolean> {
+  async start(input: 'microphone' | 'tab' | 'file', quality: 'accurate' | 'fast' = 'accurate', file?: File, engine: VoiceEngine = 'whisper'): Promise<boolean> {
     this.close();
+    this.streaming = engine === 'moonshine';
     const generation = this.generation;
     if (!speechCapabilities().microphone) throw new Error('This browser cannot capture audio for local transcription. Open the studio in a current desktop browser.');
     if (input === 'tab' && !speechCapabilities().tab) throw new Error('This browser cannot share tab audio. Open the studio in desktop Chrome or Edge.');
@@ -101,10 +109,16 @@ export class LiveSpeech {
         if (generation !== this.generation) return;
         if (!(data instanceof Float32Array)) {
           this.finishing = true;
+          if (this.streaming) { this.feedStream(); return; }
           const last = this.windows.flush();
           try { if (last) this.queue.push(last); this.processNext(); }
           catch (error) { this.fail(error instanceof Error ? error.message : 'Transcription fell behind.'); }
           return;
+        }
+        if (this.streaming) {
+          this.frames.push(data); this.frameSamples += data.length;
+          if (this.frameSamples > 16000 * 4) { this.fail('Moonshine cannot keep up on this device. Try Moonshine Live speed or Whisper in Studio settings.'); return; }
+          this.feedStream(); return;
         }
         const chunk = this.windows.push(data);
         if (chunk) {
@@ -130,7 +144,7 @@ export class LiveSpeech {
 
   private loadWorker(generation: number, quality: 'accurate' | 'fast') {
     return new Promise<void>((resolve, reject) => {
-      const worker = new Worker('/studio/speech-worker.js', { type: 'module' });
+      const worker = new Worker(this.streaming ? '/studio/moonshine-worker.js' : '/studio/speech-worker.js', { type: 'module' });
       this.worker = worker;
       const timeout = setTimeout(() => finish(new Error('The voice model download timed out. Check your connection, then try again.')), 240000);
       let settled = false;
@@ -154,7 +168,7 @@ export class LiveSpeech {
           this.busy = false;
           if (data.text) this.callbacks.transcript('local-' + this.id + '-' + data.id, data.text, data.final);
           this.callbacks.timing?.(data.inferenceMs);
-          this.callbacks.state('listening');
+          this.callbacks.state(this.streaming && !data.final ? 'processing' : 'listening');
           if (this.soundWorker && data.audio instanceof Float32Array) {
             // Coalesce previews; recognition of sounds never blocks the text worker.
             this.soundQueue = this.soundQueue.filter(item => item.id !== data.id);
@@ -164,6 +178,8 @@ export class LiveSpeech {
           }
           this.processNext();
         }
+        if (data.type === 'consumed') { this.streamBusy = false; this.feedStream(); }
+        if (data.type === 'finished') { this.streamFinished = true; this.processNext(); }
         if (data.type === 'error') {
           const message = 'Local transcription could not start. ' + (data.message || 'Reload and try again.');
           if (!settled) finish(new Error(message)); else this.fail(message);
@@ -175,6 +191,10 @@ export class LiveSpeech {
 
   private processNext() {
     if (this.stopped || this.busy || !this.worker) return;
+    if (this.streaming) {
+      if (this.finishing && this.streamFinished && !this.soundBusy && !this.soundQueue.length) { this.close(); this.callbacks.ended(); }
+      return;
+    }
     const chunk = this.queue.shift();
     if (!chunk) {
       if (this.finishing && !this.soundBusy && !this.soundQueue.length) { this.close(); this.callbacks.ended(); }
@@ -183,6 +203,20 @@ export class LiveSpeech {
     this.busy = true;
     this.callbacks.state('processing');
     this.worker.postMessage({ type: 'transcribe', ...chunk }, [chunk.audio.buffer]);
+  }
+
+  private feedStream() {
+    if (this.stopped || this.streamBusy || !this.worker) return;
+    if (this.frameSamples) {
+      const audio = new Float32Array(this.frameSamples);
+      let offset = 0;
+      for (const frame of this.frames) { audio.set(frame, offset); offset += frame.length; }
+      this.frames = []; this.frameSamples = 0; this.streamBusy = true;
+      this.worker.postMessage({ type: 'audio', audio }, [audio.buffer]);
+    } else if (this.finishing && !this.finishSent) {
+      this.finishSent = true;
+      this.worker.postMessage({ type: 'finish' });
+    }
   }
 
   private loadSoundWorker(generation: number) {
@@ -230,6 +264,7 @@ export class LiveSpeech {
     this.soundWorker?.terminate();this.soundWorker=null;
     if(this.soundTimeout)clearTimeout(this.soundTimeout);this.soundTimeout=null;
     this.soundQueue=[];this.soundBusy=false;this.soundReady=false;
+    this.frames = []; this.frameSamples = 0; this.streamBusy = false; this.streamFinished = false; this.finishSent = false;
     if (this.capture) this.capture.port.onmessage = null;
     if (this.source && 'stop' in this.source) { this.source.onended = null; try { this.source.stop(); } catch {} }
     this.source?.disconnect(); this.analyser?.disconnect(); this.capture?.disconnect(); this.silent?.disconnect();
