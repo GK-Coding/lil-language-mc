@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowCounterClockwise, ArrowDown, ArrowLeft, ArrowUpRight, CaretDown, Check, CircleNotch, DownloadSimple, FadersHorizontal, Headphones, Microphone, Pause, Play, Sparkle, SpeakerHigh, SpeakerSlash, X } from '@phosphor-icons/react';
 import { Lexicon, RhymeAnalysis, RhymeMark, RhymeSession, StudioWord } from '@/lib/studio/rhyme-engine';
 import { StableTranscript, TranscriptTrail, transcriptRows } from '@/lib/studio/transcript';
@@ -10,7 +10,6 @@ import { LiveSpeech, speechCapabilities } from '@/lib/studio/speech';
 import { alignPronunciation, pronunciationWords, HeardPhone, SpokenSound } from '@/lib/studio/pronunciation';
 import PerformancePlayer, { PerformanceControl } from './PerformancePlayer';
 import AudioWaveform from './AudioWaveform';
-import SpeechParticles from './SpeechParticles';
 
 type Source = 'demo' | 'microphone' | 'performance' | 'file';
 type Phase = 'ready' | 'starting' | 'listening' | 'processing' | 'paused' | 'complete';
@@ -30,9 +29,15 @@ function timeLabel(seconds: number) {
   return Math.floor(seconds / 60).toString().padStart(2, '0') + ':' + Math.floor(seconds % 60).toString().padStart(2, '0');
 }
 
-const LyricWord = memo(function LyricWord({ word, mark, dimmed }: { word: StudioWord; mark?: RhymeMark; dimmed: boolean }) {
-  return <span className={'studio-word' + (!word.settled ? ' is-provisional' : '') + (mark ? ' is-linked' : '') + (mark?.near ? ' is-near' : '') + (dimmed ? ' is-dimmed' : '')}
-    style={{ '--rhyme-color': mark ? COLORS[mark.color] : 'transparent', '--formation-delay': (word.formationDelay || 0) + 'ms' } as CSSProperties}
+const LyricWord = memo(function LyricWord({ word, mark, dimmed, arrivals }: { word: StudioWord; mark?: RhymeMark; dimmed: boolean; arrivals: Set<string> }) {
+  const [arriving, setArriving] = useState(() => !arrivals.has(word.id));
+  useLayoutEffect(() => {
+    arrivals.add(word.id);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setArriving(false);
+  }, [arrivals, word.id]);
+  return <span className={'studio-word' + (arriving ? ' is-materializing' : '') + (!word.settled ? ' is-provisional' : '') + (mark ? ' is-linked' : '') + (mark?.near ? ' is-near' : '') + (dimmed ? ' is-dimmed' : '')}
+    style={{ '--rhyme-color': mark ? COLORS[mark.color] : 'transparent' } as CSSProperties}
+    onAnimationEnd={event => { if (event.animationName === 'studio-word-arrive') setArriving(false); }}
     data-word-id={word.id} data-word-phase={word.settled ? 'ink' : 'dust'} data-published-at={word.settled ? word.at.toFixed(3) : undefined} data-rhyme-family={mark?.familyId} data-pronunciation={word.spoken?.source} aria-hidden={!word.settled || undefined}>
     {mark && <span className="studio-marker" aria-hidden="true" />}
     <span className="studio-word-text">{word.text}</span>
@@ -54,7 +59,6 @@ export default function LiveStudio() {
   const [clock, setClock] = useState(0);
   const [beatPosition, setBeatPosition] = useState(0);
   const [following, setFollowing] = useState(true);
-  const [pendingWords, setPendingWords] = useState(0);
   const [previewWords, setPreviewWords] = useState<StudioWord[]>([]);
   const [soundState, setSoundState] = useState<'loading' | 'ready' | 'unavailable' | ''>('');
   const [soundMb, setSoundMb] = useState(0);
@@ -75,6 +79,7 @@ export default function LiveStudio() {
 
   const trail = useRef(new TranscriptTrail());
   const published = useRef(new StableTranscript());
+  const arrivals = useRef(new Set<string>());
   const rhymeSession = useRef(new RhymeSession());
   const viewportRef = useRef<HTMLDivElement>(null);
   const followingRef = useRef(true);
@@ -114,7 +119,6 @@ export default function LiveStudio() {
   const ingest = useCallback((id: string, text: string, final: boolean) => {
     const snapshot = trail.current.update(id, text, final, clockRef.current);
     const next = published.current.update(snapshot, clockRef.current, sourceRef.current === 'demo');
-    setPendingWords(next.pending);
     setPreviewWords(next.preview.map(word=>({...word,settled:false})));
     if (next.words.length !== wordsRef.current.length) {
       const enriched = next.words.map(word=>spoken.current.has(word.id)?{...word,spoken:spoken.current.get(word.id)}:word);
@@ -140,9 +144,9 @@ export default function LiveStudio() {
 
   const clearTrail = useCallback(() => {
     wordsRef.current = trail.current.clear();
-    published.current.clear(); rhymeSession.current.clear();
+    published.current.clear(); rhymeSession.current.clear(); arrivals.current.clear();
     spoken.current.clear();setPreviewWords([]);
-    setWords([]); setPendingWords(0); setAnalysis(EMPTY_ANALYSIS); setFocusedFamily(null);
+    setWords([]); setAnalysis(EMPTY_ANALYSIS); setFocusedFamily(null);
     followingRef.current = true; setFollowing(true);
     if (viewportRef.current) viewportRef.current.scrollTop = 0;
   }, []);
@@ -166,7 +170,7 @@ export default function LiveStudio() {
     void beat.current?.pause();
     player.current?.pause();
     setAnalyser(null);
-    setPhase('paused'); setPendingWords(0);setPreviewWords([]);
+    setPhase('paused'); setPreviewWords([]);
   }, [setActive]);
 
   const reset = useCallback(() => {
@@ -235,9 +239,7 @@ export default function LiveStudio() {
       ended: () => {
         if (!mounted.current || generation !== sourceGeneration.current) return;
         if (liveSource === 'file') {
-          // Finish the current particle formation without holding back recognized words.
-          const delay = 1100;
-          setTimeout(() => { if (mounted.current && generation === sourceGeneration.current) { setActive(false); setPhase('complete'); } }, delay);
+          setActive(false); setPhase('complete');
         } else { setActive(false); setPhase('paused'); }
       }
     });
@@ -314,7 +316,7 @@ export default function LiveStudio() {
         if (view && last && followingRef.current) {
           const latest = wordsRef.current[wordsRef.current.length - 1];
           const drift = Math.min(40, Math.max(0, clockRef.current - (latest?.at || 0)) * tempoRef.current / 60 * 7);
-          const target = Math.max(0, Math.min(view.scrollHeight - view.clientHeight, last.offsetTop + last.offsetHeight + 110 + drift - view.clientHeight));
+          const target = Math.max(0, Math.min(view.scrollHeight - view.clientHeight, last.offsetTop + last.offsetHeight + 24 + drift - view.clientHeight));
           const distance = target - view.scrollTop;
           view.scrollTop = Math.abs(distance) < 1 ? target : view.scrollTop + distance * .18;
           for (const node of nodes.slice(-18)) {
@@ -389,18 +391,17 @@ export default function LiveStudio() {
     </header>
 
     <section className="studio-main-panel" aria-label="Live rhyme transcript">
-      <div className="studio-session-header"><span><span className={'studio-session-dot' + (running ? ' is-running' : '')} />{source === 'demo' ? 'DEMO SESSION' : source === 'microphone' ? 'YOUR FREESTYLE' : source === 'file' ? fileName : currentPerformance.artist.toUpperCase()}</span><span>{words.length} words</span></div>
+      <div className="studio-session-header"><span><span className={'studio-session-dot' + (running ? ' is-running' : '')} />{source === 'demo' ? 'DEMO SESSION' : source === 'microphone' ? 'YOUR FREESTYLE' : source === 'file' ? fileName : currentPerformance.artist.toUpperCase()}</span><span>{words.length + previewWords.length} words</span></div>
       <div className={'studio-stage' + (running ? ' is-active' : '') + (!following ? ' is-reviewing' : '')} data-testid="rhyme-stage">
         <div ref={viewportRef} className="studio-trail" role="region" tabIndex={0} aria-label="Transcript" aria-live="off" onWheel={reviewTranscript} onTouchStart={reviewTranscript} onPointerDown={reviewTranscript} onKeyDown={event => { if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) reviewTranscript(); }}>
           <div ref={linesRef} className="studio-lines">
             {visibleRows.map(row => <div key={row.id} data-row-id={row.id} className="studio-line">
-              {row.words.map(word => <LyricWord key={word.id} word={word} mark={analysis.marks[word.id]} dimmed={Boolean(focusedFamily && analysis.marks[word.id]?.familyId !== focusedFamily)} />)}
+              {row.words.map(word => <LyricWord key={word.id} word={word} mark={analysis.marks[word.id]} dimmed={Boolean(focusedFamily && analysis.marks[word.id]?.familyId !== focusedFamily)} arrivals={arrivals.current} />)}
             </div>)}
           </div>
         </div>
-        <SpeechParticles analyser={analyser} active={running || phase === 'starting'} busy={phase === 'processing' || phase === 'starting'} pending={pendingWords} following={following} wordRoot={linesRef} viewport={viewportRef} />
         {!following && <button className="studio-back-to-live" onClick={backToLive}><ArrowDown size={15} />Back to live</button>}
-        {!words.length && !running && phase !== 'starting' && <div className="studio-empty-verse"><p>{source === 'demo' ? 'Press play. See the rhymes.' : 'Your next line starts here.'}</p></div>}
+        {!words.length && !previewWords.length && !running && phase !== 'starting' && <div className="studio-empty-verse"><p>{source === 'demo' ? 'Press play. See the rhymes.' : 'Your next line starts here.'}</p></div>}
       </div>
       {error && <div className="studio-error" role="alert"><span>{error}</span><button className="studio-icon-button" aria-label="Dismiss message" onClick={() => setError('')}><X size={18} /></button></div>}
       <footer className="studio-feedback">

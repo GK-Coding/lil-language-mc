@@ -56,23 +56,19 @@
 .studio-trail:focus-visible { outline: 1px solid #5ce2c755; outline-offset: -2px; }
 .studio-trail::-webkit-scrollbar { width: 5px; }
 .studio-trail::-webkit-scrollbar-thumb { border-radius: 3px; background: #626a72; }
-.studio-lines { position: relative; min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding-top: 18px; padding-bottom: 155px; }
+.studio-lines { position: relative; min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding-top: 18px; padding-bottom: 48px; }
 .studio-line:last-child { margin-bottom: 0; }
-.studio-speech-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
 .studio-stage.is-reviewing .studio-trail { mask-image: none; }
 .studio-stage.is-reviewing .studio-line { opacity: 1 !important; }
 .studio-back-to-live { position: absolute; z-index: 3; right: 10px; bottom: 18px; display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border: 1px solid #5ce2c755; border-radius: 18px; background: var(--studio-panel); color: var(--studio-accent); font-size: 12px !important; box-shadow: 0 3px 20px #0003; }
 .studio-line { position: relative; flex-shrink: 0; margin-bottom: 20px; font-size: clamp(28px, 2.45vw, 44px); line-height: 1.58; letter-spacing: -.035em; font-weight: 500; will-change: opacity; }
 .studio-word { display: inline-block; position: relative; padding: 0 2px; margin: 0 .16em 0 0; max-width: 100%; overflow-wrap: anywhere; isolation: isolate; }
-.studio-word:not(.is-provisional) { animation: studio-word-arrive .24s ease both; }
-.studio-word[data-particle-state] { animation: none; }
-.studio-word:is([data-particle-state='forming'], [data-particle-state='landing']) .studio-word-text { opacity: var(--particle-ink, 0); }
-.studio-word[data-particle-state='forming'] .studio-marker { visibility: hidden; animation: none; }
-.studio-word.is-provisional { visibility: hidden; }
+.studio-word.is-materializing { animation: studio-word-arrive .18s ease-out both; }
+.studio-word.is-provisional .studio-word-text { opacity: .68; }
 .studio-stage.is-reviewing .studio-word { animation: none; }
 .studio-stage.is-reviewing .studio-word-text { opacity: 1 !important; }
 .studio-word.is-dimmed { opacity: .22; transition: opacity .3s; }
-.studio-word-text { position: relative; z-index: 1; transition: color .18s; }
+.studio-word-text { position: relative; z-index: 1; transition: color .18s, opacity .12s; }
 .studio-word.is-linked .studio-word-text { color: #1b1c1d; }
 .studio-marker { position: absolute; z-index: 0; left: -1px; right: -1px; top: 15%; bottom: 9%; background: var(--rhyme-color); border-radius: 3px 2px 4px 2px; transform-origin: left center; animation: studio-highlight-sweep .45s cubic-bezier(.2,.75,.2,1) both; transition: background-color .25s; }
 .studio-word.is-near .studio-marker { opacity: .4; border-bottom: 2px dashed var(--rhyme-color); }
@@ -162,7 +158,7 @@
 .studio-tab-instruction strong { color: #e4e4e4; font-weight: 500; }
 .studio-official-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 14px; color: var(--studio-accent); font-size: 12px; }
 .studio-spin { animation: studio-spin 1s linear infinite; }
-@keyframes studio-word-arrive { from { opacity: 0; } to { opacity: 1; } }
+@keyframes studio-word-arrive { from { opacity: .15; filter: blur(5px); } to { opacity: 1; filter: blur(0); } }
 @keyframes studio-highlight-sweep { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes studio-family-arrive { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes studio-spin { to { transform: rotate(360deg); } }
@@ -194,4 +190,4 @@
   .studio-timing { font-size: 11px; }
   .studio-error { bottom: 70px; font-size: 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .studio-speech-particles { display: none; } .studio-word .studio-word-text { opacity: 1 !important; } .studio-word .studio-marker { visibility: visible !important; } .live-studio *, .live-studio *:before, .live-studio *:after { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .studio-word .studio-word-text { opacity: 1 !important; } .live-studio *, .live-studio *:before, .live-studio *:after { animation: none !important; transition: none !important; } }
