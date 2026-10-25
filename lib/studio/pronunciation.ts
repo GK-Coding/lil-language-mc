@@ -1,8 +1,8 @@
 import type { Lexicon, StudioWord } from './rhyme-engine';
 
 export type HeardPhone = { token: string; start: number; end: number; confidence: number };
-export type SpokenSound = { phones: string; confidence: number; source: 'audio' };
-type Phone = { value: string; confidence: number };
+export type SpokenSound = { phones: string; confidence: number; source: 'audio'; stressSource?: 'lexicon' | 'monosyllable' | 'unknown' };
+type Phone = { value: string; confidence: number; stress?: number };
 const VOWEL = /^(AA|AE|AH|AO|AW|AY|EH|ER|EY|IH|IY|OW|OY|UH|UW)$/;
 // The recognizer's espeak labels describe the recording, independently of ASR text.
 // Map the English inventory only; unrecognized labels stay unknown, never guessed.
@@ -43,14 +43,14 @@ export function alignPronunciation(words: StudioWord[], heard: HeardPhone[], lex
   const actual: Phone[] = heard.flatMap(phone => (IPA[phone.token] || '').split(' ').filter(Boolean).map(value => ({ value, confidence: phone.confidence })));
   const result = new Map<string, SpokenSound>();
   if (!words.length || !actual.length || words.length > 110 || actual.length > 900) return result;
-  const expected: { value: string; word: number }[] = [];
+  const expected: { value: string; word: number; stress?: number }[] = [];
   const known: boolean[] = [];
   words.forEach((word,index) => {
     const text = normalize(word.text);
     const dictionary = lexicon[text] || (text.endsWith('in') ? lexicon[text+'g']?.replace(/NG$/, 'N') : undefined);
     known.push(Boolean(dictionary));
-    const phones = dictionary ? dictionary.split(/\s+/).map(phone=>phone.replace(/[012]$/,'')) : Array.from({length:Math.max(2,Math.min(10,Math.round(text.length*.6)))},()=>'?');
-    phones.forEach(value=>expected.push({value,word:index}));
+    const phones = dictionary ? dictionary.split(/\s+/) : Array.from({length:Math.max(2,Math.min(10,Math.round(text.length*.6)))},()=>'?');
+    phones.forEach(phone=>expected.push({value:phone.replace(/[012]$/,''),word:index,stress:/[012]$/.test(phone)?Number(phone.slice(-1)):undefined}));
   });
   const n=expected.length, m=actual.length;
   const cost=Array.from({length:n+1},()=>new Float32Array(m+1));
@@ -71,7 +71,9 @@ export function alignPronunciation(words: StudioWord[], heard: HeardPhone[], lex
     const direction=move[i][j];
     if(i&&j&&direction===0){
       const item=expected[i-1], phone=actual[j-1];
-      assignments[item.word].unshift(phone);coverage[item.word]++;
+      // Keep the aligned lexical stress prior, including unstressed vowels.
+      // The phone recognizer measures vowels, not performed prominence.
+      assignments[item.word].unshift({...phone,stress:VOWEL.test(phone.value)&&VOWEL.test(item.value)?item.stress:undefined});coverage[item.word]++;
       if(item.value===phone.value)matches[item.word]++;
       i--;j--;
     } else if(i&&(!j||direction===1))i--;
@@ -86,7 +88,9 @@ export function alignPronunciation(words: StudioWord[], heard: HeardPhone[], lex
     const anchored=words.length===1||(index>0&&matches[index-1]>=2)||(index+1<words.length&&matches[index+1]>=2);
     const fit=known[index] ? matches[index]/Math.max(1,expectedCount-vowels.length) : anchored?1:0;
     if(confidence<.64||fit<.5||vowels.some(phone=>phone.confidence<.4))return;
-    result.set(word.id,{source:'audio',confidence,phones:observed.map(phone=>phone.value+(VOWEL.test(phone.value)?'1':'')).join(' ')});
+    const stressSource = known[index] && vowels.every(phone=>phone.stress!==undefined) && vowels.some(phone=>(phone.stress||0)>0)
+      ? 'lexicon' : !known[index] && vowels.length===1 ? 'monosyllable' : 'unknown';
+    result.set(word.id,{source:'audio',confidence,stressSource,phones:observed.map(phone=>phone.value+(VOWEL.test(phone.value)?String(stressSource==='monosyllable'?1:phone.stress??0):'')).join(' ')});
   });
   return result;
 }

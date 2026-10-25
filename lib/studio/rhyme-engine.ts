@@ -2,9 +2,10 @@ export type Lexicon = Record<string, string>;
 import type { SpokenSound } from './pronunciation';
 export type StudioWord = { id: string; text: string; at: number; settled: boolean; segment?: string; spoken?: SpokenSound; formationDelay?: number };
 type Syllable = { vowel: string; coda: string[]; stress: number };
-type Pronunciation = { phones: string; syllables: Syllable[] };
-type Candidate = { key: string; text: string; normalized: string; words: StudioWord[]; syllables: Syllable[]; phrase: boolean };
-export type RhymeFamily = { id: string; color: number; examples: string[]; wordIds: string[]; syllables: number; kind: 'rhyme' | 'multisyllable' | 'phrase' | 'near' };
+type Pronunciation = { phones: string; syllables: Syllable[]; uncertain?: boolean };
+type Candidate = { key: string; text: string; normalized: string; words: StudioWord[]; syllables: Syllable[]; phrase: boolean; uncertain: boolean };
+type RhymeOccurrence = { wordIds: string[]; text: string; near: boolean };
+export type RhymeFamily = { id: string; color: number; examples: string[]; wordIds: string[]; occurrences: RhymeOccurrence[]; syllables: number; kind: 'rhyme' | 'multisyllable' | 'phrase' | 'near' };
 export type RhymeMark = { familyId: string; color: number; near: boolean };
 export type RhymeAnalysis = { families: RhymeFamily[]; marks: Record<string, RhymeMark> };
 export type FamilyColors = Map<string, number>;
@@ -99,21 +100,21 @@ export function analyzeRhymes(words: StudioWord[], lexicon: Lexicon, includeNear
   const recent = words.slice(-320);
   const candidates: Candidate[] = [];
   const candidateKeys = new Set<string>();
-  const options = recent.map(word => word.spoken?.source === 'audio' && word.spoken.confidence >= .64
-    ? [{ phones: word.spoken.phones, syllables: parsePhones(word.spoken.phones) }]
+  const options: Pronunciation[][] = recent.map(word => word.spoken?.source === 'audio' && word.spoken.confidence >= .64
+    ? word.spoken.stressSource === 'unknown' && !includeNear ? [] : [{ phones: word.spoken.phones, syllables: parsePhones(word.spoken.phones), uncertain: word.spoken.stressSource === 'unknown' }]
     : pronunciations(word.text, lexicon));
-  const add = (span: StudioWord[], syllables: Syllable[], phrase: boolean) => {
+  const add = (span: StudioWord[], syllables: Syllable[], phrase: boolean, uncertain = false) => {
     const normalized = span.map(value => normalizeWord(value.text)).join(' ');
     const key = signature(syllables);
     const identity = key + ':' + span[0].id + ':' + span.length;
     if (candidateKeys.has(identity)) return;
     candidateKeys.add(identity);
-    candidates.push({ key, text: span.map(value => value.text.replace(/[.,!?;:]$/g, '')).join(' '), normalized, words: span, syllables, phrase });
+    candidates.push({ key, text: span.map(value => value.text.replace(/[.,!?;:]$/g, '')).join(' '), normalized, words: span, syllables, phrase, uncertain });
   };
   for (let index = 0; index < recent.length; index++) {
     const word = recent[index];
     if (!word.settled) continue;
-    if (!FILLERS.has(normalizeWord(word.text))) for (const option of options[index]) for (const suffix of tails(option.syllables)) add([word], suffix, false);
+    if (!FILLERS.has(normalizeWord(word.text))) for (const option of options[index]) for (const suffix of tails(option.syllables)) add([word], suffix, false, option.uncertain);
     for (let size = 2; size <= 3 && index + size <= recent.length; size++) {
       const span = recent.slice(index, index + size);
       if (span.some((value, offset) => !value.settled || !options[index + offset].length)) continue;
@@ -131,7 +132,7 @@ export function analyzeRhymes(words: StudioWord[], lexicon: Lexicon, includeNear
           while (first < combo.length - 1 && covered + combo[first].syllables.length <= start) covered += combo[first++].syllables.length;
           const matched = span.slice(first);
           if (matched.length < 2 || FILLERS.has(normalizeWord(matched[0].text))) continue;
-          add(matched, suffix, true);
+          add(matched, suffix, true, combo.some(option=>option.uncertain));
         }
       }
     }
@@ -155,9 +156,11 @@ export function analyzeRhymes(words: StudioWord[], lexicon: Lexicon, includeNear
     if (new Set(usable.map(value => normalizeWord(value.words[value.words.length - 1].text))).size < 2) continue;
     const id = 'sound:' + key;
     const color = stableColor(id, colorRegistry);
-    const family: RhymeFamily = { id, color, examples: [...new Set(usable.map(value => value.text))].slice(-5), wordIds: [...new Set(usable.flatMap(value => value.words.map(word => word.id)))], syllables: usable[0].syllables.length, kind: usable.some(value => value.phrase) ? 'phrase' : usable[0].syllables.length > 1 ? 'multisyllable' : 'rhyme' };
+    const exact = new Set(usable.filter(value=>!value.uncertain).map(value=>normalizeWord(value.words[value.words.length-1].text))).size >= 2;
+    const occurrences = usable.map(value=>({wordIds:value.words.map(word=>word.id),text:value.text,near:!exact||value.uncertain}));
+    const family: RhymeFamily = { id, color, examples: [...new Set(occurrences.map(value=>value.text))].slice(-5), wordIds: [...new Set(occurrences.flatMap(value=>value.wordIds))], occurrences, syllables: usable[0].syllables.length, kind: !exact ? 'near' : usable.some(value => value.phrase) ? 'phrase' : usable[0].syllables.length > 1 ? 'multisyllable' : 'rhyme' };
     families.push(family);
-    for (const wordId of family.wordIds) marks[wordId] = { familyId: id, color, near: false };
+    for (const occurrence of occurrences) for (const wordId of occurrence.wordIds) marks[wordId] = { familyId: id, color, near: occurrence.near };
   }
   if (includeNear) {
     const singles = candidates.filter(value => !value.phrase);
@@ -176,10 +179,11 @@ export function analyzeRhymes(words: StudioWord[], lexicon: Lexicon, includeNear
       const color = anchor?.color ?? stableColor(id, colorRegistry);
       let family = families.find(value => value.id === id);
       if (!family) {
-        family = { id, color, examples: [best.text], wordIds: [best.words[0].id], syllables: a.syllables.length, kind: 'near' };
+        family = { id, color, examples: [best.text], wordIds: [best.words[0].id], occurrences: [{wordIds:[best.words[0].id],text:best.text,near:true}], syllables: a.syllables.length, kind: 'near' };
         families.push(family); marks[best.words[0].id] = { familyId: id, color, near: true };
       }
       if (!family.wordIds.includes(a.words[0].id)) family.wordIds.push(a.words[0].id);
+      family.occurrences.push({wordIds:[a.words[0].id],text:a.text,near:true});
       if (!family.examples.includes(a.text)) family.examples = [...family.examples, a.text].slice(-5);
       marks[a.words[0].id] = { familyId: id, color, near: true };
     }
@@ -191,44 +195,46 @@ export function analyzeRhymes(words: StudioWord[], lexicon: Lexicon, includeNear
 export class RhymeSession {
   private analysis: RhymeAnalysis = { families: [], marks: {} };
   private colors = new Map<string, number>();
-  private aliases = new Map<string, string>();
   private heard = new Map<string, string>();
-  clear() { this.analysis = { families: [], marks: {} }; this.colors.clear(); this.aliases.clear(); this.heard.clear(); }
+  clear() { this.analysis = { families: [], marks: {} }; this.colors.clear(); this.heard.clear(); }
   update(words: StudioWord[], lexicon: Lexicon, includeNear = true): RhymeAnalysis {
     const fresh = analyzeRhymes(words, lexicon, includeNear, this.colors);
-    const marks = { ...this.analysis.marks };
-    // A confident acoustic correction can invalidate an earlier dictionary match.
-    // Preserve the words and colors, but don't preserve a relationship we now hear differently.
-    const changedFamilies = new Set<string>();
-    for (const word of words) if (word.spoken && this.heard.get(word.id) !== word.spoken.phones) {
-      if (marks[word.id]) changedFamilies.add(marks[word.id].familyId);
-      this.heard.set(word.id, word.spoken.phones);
+    const present = new Set(words.map(word=>word.id));
+    const active = new Set(words.slice(-320).map(word=>word.id));
+    const changed = new Set<string>();
+    for (const word of words) {
+      const sound = JSON.stringify([normalizeWord(word.text),word.spoken?.phones,word.spoken?.stressSource,(word.spoken?.confidence||0)>=.64]);
+      if (this.heard.has(word.id) && this.heard.get(word.id)!==sound) changed.add(word.id);
+      this.heard.set(word.id,sound);
     }
-    for (const [id, mark] of Object.entries(marks)) if (changedFamilies.has(mark.familyId)) delete marks[id];
-    if (!includeNear) for (const [id, mark] of Object.entries(marks)) if (mark.near) delete marks[id];
-    const metadata = new Map(this.analysis.families.map(family => [family.id, family]));
+    // Rebuild the live window from current evidence. Never alias different sounds
+    // through an old near match; canonical sound IDs own their stable colors.
+    const merged = new Map<string,RhymeFamily>();
+    for (const family of this.analysis.families) {
+      if (!family.wordIds.some(id=>!active.has(id))) continue;
+      const occurrences = family.occurrences.filter(occurrence=>
+        (includeNear||!occurrence.near) && occurrence.wordIds.every(id=>present.has(id)&&!changed.has(id)&&(!fresh.marks[id]||fresh.marks[id].familyId===family.id)));
+      if (occurrences.length) merged.set(family.id,{...family,occurrences});
+    }
     for (const family of fresh.families) {
-      const previous = family.wordIds.map(id => marks[id]).find(Boolean);
-      const id = this.aliases.get(family.id) || previous?.familyId || family.id;
-      this.aliases.set(family.id, id);
-      const old = metadata.get(id);
-      const color = old?.color ?? family.color;
-      metadata.set(id, { ...family, id, color, examples: [...new Set([...(old?.examples || []), ...family.examples])].slice(-5) });
-      for (const wordId of family.wordIds) {
-        const oldMark = marks[wordId];
-        if (!oldMark || oldMark.familyId === id || (oldMark.near && !fresh.marks[wordId].near)) marks[wordId] = { familyId: id, color, near: fresh.marks[wordId].near };
-      }
+      const history = merged.get(family.id)?.occurrences || [];
+      merged.set(family.id,{...family,occurrences:[...history,...family.occurrences]});
     }
-    const members = new Map<string, string[]>();
-    for (const [wordId, mark] of Object.entries(marks)) {
-      const ids = members.get(mark.familyId) || []; ids.push(wordId); members.set(mark.familyId, ids);
+    const marks: Record<string,RhymeMark> = {};
+    const families: RhymeFamily[] = [];
+    for (const family of merged.values()) {
+      const occurrences = [...new Map(family.occurrences.map(value=>[value.wordIds.join('\0'),value])).values()];
+      const examples = [...new Set(occurrences.map(value=>value.text))];
+      const wordIds = [...new Set(occurrences.flatMap(value=>value.wordIds))];
+      const exampleKey = (text:string)=>text.split(/\s+/).map(normalizeWord).join(' ');
+      if (wordIds.length<2 || new Set(examples.map(exampleKey)).size<2) continue;
+      const exactExamples = new Set(occurrences.filter(value=>!value.near).map(value=>exampleKey(value.text)));
+      const exact = exactExamples.size>=2;
+      const kind:RhymeFamily['kind'] = !exact ? 'near' : occurrences.some(value=>value.wordIds.length>1) ? 'phrase' : family.syllables>1 ? 'multisyllable' : 'rhyme';
+      const current = {...family,wordIds,examples:examples.slice(-5),kind,occurrences:occurrences.map(value=>({...value,near:!exact||value.near}))};
+      families.push(current);
+      for (const occurrence of current.occurrences) for (const id of occurrence.wordIds) marks[id]={familyId:family.id,color:family.color,near:occurrence.near};
     }
-    const families = [...members.entries()].flatMap(([id, wordIds]) => {
-      const meta = metadata.get(id);
-      return meta && wordIds.length >= 2 ? [{ ...meta, wordIds }] : [];
-    });
-    const valid = new Set(families.map(family => family.id));
-    for (const [id, mark] of Object.entries(marks)) if (!valid.has(mark.familyId)) delete marks[id];
     this.analysis = { families, marks };
     return this.analysis;
   }

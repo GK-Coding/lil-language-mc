@@ -451,7 +451,7 @@ export default function LiveStudio() {
           {focusedFamily && <button className="studio-file-button" onClick={() => { setFocusedFamily(null); panelRef.current?.close(); }}>Show all words</button>}
           <div className="studio-family-list">
             {families.length ? families.map(family => <button key={family.id} className={'studio-family' + (focusedFamily === family.id ? ' is-focused' : '')} style={{ '--rhyme-color': COLORS[family.color] } as CSSProperties} aria-pressed={focusedFamily === family.id} onClick={() => { setFocusedFamily(focusedFamily === family.id ? null : family.id); panelRef.current?.close(); }}>
-              <span className="studio-family-swatch" /><span><strong>{family.examples.join(' / ')}</strong><small>{family.kind === 'phrase' ? 'Across words' : family.kind === 'multisyllable' ? family.syllables + '-syllable rhyme' : family.kind === 'near' ? 'Possible rhyme' : 'Matching sound'}</small></span>
+              <span className="studio-family-swatch" /><span><strong>{family.examples.join(' / ')}</strong><small>{family.kind === 'phrase' ? 'Across words' : family.kind === 'multisyllable' ? family.syllables + '-syllable rhyme' : family.kind === 'near' ? 'Possible rhyme' : 'Matching sound'}{family.kind !== 'near' && family.wordIds.some(id=>analysis.marks[id]?.near) && ' · Includes possible matches'}</small></span>
             </button>) : <p className="studio-no-families">Your rhyme connections will appear here.</p>}
           </div>
           <div className="studio-ink-key"><span className="studio-key-solid" />Rhyme<span className="studio-key-dashed" />Possible rhyme</div>

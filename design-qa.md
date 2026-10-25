@@ -1,4 +1,4 @@
-# Current LLMC · local streaming voice trial
+# Current LLMC · rhyme audit fixes verified
 
 final result: passed
 
@@ -6,7 +6,18 @@ final result: passed
 
 No actionable P0/P1/P2 visual findings remain in the checked states, including the latest request for more text space, a small play button, and the original game colors. Recognition is a tested local prototype, with the real-audio limitations below; this is not a claim of perfect freestyle transcription.
 
-## Current revision: Moonshine streaming trial
+## Current revision: three rhyme audit defects repaired (25 October 2026)
+
+- **P1, invented stress:** aligned observed vowels now retain their lexical primary, secondary, or unstressed position instead of all becoming primary. Bent vowels remain measured from audio. Unknown multisyllable prominence is explicitly uncertain and supplies only possible matches; it cannot become an exact anchor. Lexical stress remains a prior, not a measurement of performed prominence.
+- **P1, merged groups:** live groups are reconciled from current evidence with canonical sound IDs. The old alias through an early possible rhyme is removed, so see/free and eat/beat split correctly and stay separate after the possible-rhyme toggle. Stable colors belong to sound IDs. Validated historical spans survive crossing the 320-word boundary without accumulating duplicate occurrences.
+- **P2, stale examples:** each matched occurrence carries its actual word span. Both panel examples and markers derive from those validated spans. Corrections remove former members from both. Mixed exact/possible groups explicitly say they include possible matches.
+- **Regression verification:** the three original audit checks pass unchanged against the corrected checkout. Ten permanent regressions cover those cases, bent-vowel preservation, the crazy/every/see/need/feed example, unknown multisyllable stress, group-color stability, window boundaries, archived corrections, and phrase membership. All **58 studio checks pass**. Production build, type/lint checks, and whitespace validation pass.
+- **Fresh browser QA:** real local audio produced 40 words. Five displayed family rows were checked against the current marker colors and word text, with zero stale examples. The possible-rhyme control was exercised. All four intended sample clusters were present (light/night, flow/grow, spark/mark/dark, pace/space/face); the additional find/right/inside cluster reflects remaining acoustic recognition uncertainty. A second run showed actual audio driving the particle frontier at measured level 0.998 with a forming glyph before text publication. No expected text was inserted into the UI.
+- **Limits:** the first audio run's latest recognition pass was about 3.1 seconds and its full session including sound-job drain completed around 26 seconds. Load/warming varies; this is not a latency improvement claim. The user's original freestyle audio was unavailable for replay, so these repairs do not establish word accuracy on that recording, accents, or fast rap. Transcription and phone recognition remain probabilistic.
+- **Evidence:** the fresh captures and DOM checks are under `llmc-qa-20261025/fixed/` in the shared workspace: `01-live-feedback.png`, `02-current-families.png`, `03-audio-result.png`, `browser-validation.json`, and test output. The earlier failed audit is retained separately as history.
+- **Delivery:** changes stay on `feat/live-rhyme-studio`; the local preview remains `http://127.0.0.1:3012/studio`. Main is unchanged.
+
+## Previous revision: Moonshine streaming trial
 
 - Added the official MIT-licensed `@moonshine-ai/moonshine-wasm` runtime pinned to `0.1.5`, with English Small and Medium Streaming. Whisper Small/Base remain selectable. No key or paid inference service is used. Weights download on first use and are cached locally.
 - The default is **Moonshine · Live speed (Small)**. This choice follows the actual local sample result below, rather than a claim that one model is universally best. Medium is available as **Live accuracy**. The settings menu and existing compact charcoal/turquoise interface remain intact.
