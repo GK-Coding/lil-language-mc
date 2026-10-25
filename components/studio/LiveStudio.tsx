@@ -32,8 +32,7 @@ function timeLabel(seconds: number) {
 
 const LyricWord = memo(function LyricWord({ word, mark, dimmed }: { word: StudioWord; mark?: RhymeMark; dimmed: boolean }) {
   return <span className={'studio-word' + (!word.settled ? ' is-provisional' : '') + (mark ? ' is-linked' : '') + (mark?.near ? ' is-near' : '') + (dimmed ? ' is-dimmed' : '')}
-    style={{ '--rhyme-color': mark ? COLORS[mark.color] : 'transparent', '--formation-delay': (word.formationDelay || 0) + 'ms', '--highlight-delay': (word.formationDelay || 0) + 'ms' } as CSSProperties}
-    onAnimationEnd={event => { if (event.animationName === 'studio-word-arrive') event.currentTarget.style.setProperty('--highlight-delay', '0ms'); }}
+    style={{ '--rhyme-color': mark ? COLORS[mark.color] : 'transparent', '--formation-delay': (word.formationDelay || 0) + 'ms' } as CSSProperties}
     data-word-id={word.id} data-word-phase={word.settled ? 'ink' : 'dust'} data-published-at={word.settled ? word.at.toFixed(3) : undefined} data-rhyme-family={mark?.familyId} data-pronunciation={word.spoken?.source} aria-hidden={!word.settled || undefined}>
     {mark && <span className="studio-marker" aria-hidden="true" />}
     <span className="studio-word-text">{word.text}</span>
